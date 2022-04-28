@@ -31,13 +31,14 @@ export async function getTemplates() {
         if (error) {
             console.log(`error: ${error.message}`);
             return;
-            
+
         }
         if (stderr) {
             console.log(`stderr: ${stderr}`);
             return;
         }
         console.log(`stdout: ${stdout}`);
+        
     });
 
     console.log('here')
