@@ -1,6 +1,7 @@
 import React, {
   useState, useEffect, useContext, useMemo,
 } from 'react';
+import { getTemplates } from '../Lib/dao';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import {
@@ -18,7 +19,7 @@ import {
 import showNotification from '../Lib/notification'
 import configShow from '../Lib/dao'
 
-export default function Test() {
+export default function Test({repos}) {
   const [templateRepo, setTemplateRepo] = React.useState('');
   const router = useRouter();
   const [repo, setRepo] = useState([]);
@@ -30,14 +31,13 @@ export default function Test() {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ name: repo }),
     });
 
     const data = await res.json();
 
     if (res.status === 200 && data.success && data.token) {
       console.log('here');
-      await router.push('user/dashboard');
 
     }
     else {
@@ -69,11 +69,11 @@ export default function Test() {
             <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
 
               <Typography variant="h6" style={{ marginBottom: '5%' }} >
-                Δηλώστε το όνομα του repository που θα αρχικοποιηθεί.
+                Δημιουργήστε αποθετήρια
               </Typography>
             </div>
             <form method="POST" action="javascript:void(0);" >
-              <Box style={{ display: 'flex', minWidth:'350px' , width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
+              <Box style={{ display: 'flex', minWidth:'350px' , width: '100%', justifyContent: 'center',  }}>
               <FormControl sx={{ m: 1, minWidth: 120 }}>
               <InputLabel id="demo-simple-select-helper-label">Template Repositories</InputLabel>
 
@@ -85,16 +85,17 @@ export default function Test() {
                   label="Template Repositories"
                   onChange={handletemplateRepo}
                 >
-                  <MenuItem value={10}>Ten</MenuItem>
-                  <MenuItem value={20}>Twenty</MenuItem>
-                  <MenuItem value={30}>Thirty</MenuItem>
+                  {repos.map((repo)=> {
+                    return (<MenuItem value={repo}> {repo} </MenuItem>)
+                  })}
+                  
                 </Select>
                 </FormControl>
 
               </Box>
-              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '8%' }}>
                 <Button type="submit" variant="contained" color="primary" onClick={signIn}>
-                  Αρχικοποιήση
+                  Επιλογη
                 </Button>
               </div>
               <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
@@ -103,7 +104,7 @@ export default function Test() {
 
               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
                 <Button type="submit" variant="contained" color="primary" onClick={signIn}>
-                  Αρχικοποιήση
+                  Αρχικοποιηση
                 </Button>
               </div>
 
@@ -120,8 +121,14 @@ export default function Test() {
 
 export async function getServerSideProps(context) {
   const KEY = process.env.JWT_KEY;
+
+  const template =  await getTemplates();
+  const repos = [];
+  for(let temp of template ){
+      if(temp.isTemplate) repos.push(temp.name)
+  }
   return {
-    props: {},
+    props: { repos },
   }
 }
 
