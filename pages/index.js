@@ -69,25 +69,25 @@ export default function Home() {
 
   return (
     <>
-      <Container maxWidth="md" style={{ display: 'flex', justifyContent: 'center', height: '45vh', marginBottom: '2%', marginTop: '2%', padding: '3%' }}>
-        <Card style={{ maxWidth: 500 }}>
+      <Container maxWidth="md" style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', marginTop: '3%', padding: '4%'  }}>
+        <Card style={{ maxWidth: 700, minWidth: 400 }}>
           <div style={{ padding: '5%' }}>
             <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
 
-              <Typography variant="body2" style={{ marginBottom: '5%' }} >
-                Συνδεθείτε στο σύστημα εισάγοντας το email και το password σας.
+              <Typography variant="h5" style={{ marginBottom: '5%', fontFamily: "oxygen", color: "#494949"}} >
+                Συνδεθείτε στο σύστημα
               </Typography>
             </div>
             <form method="POST" action="javascript:void(0);" >
               <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-                <TextField size="small" label="email" variant="outlined" type="email" onChange={handleEmail} />
+                <TextField size="small" label="Email" variant="outlined" type="email" onChange={handleEmail} />
               </Box>
               <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-                <TextField size="small" label="password" variant="outlined" type="password" onChange={handlePass} />
+                <TextField size="small" label="Κωδικός" variant="outlined" type="password" onChange={handlePass} />
               </Box>
 
               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
-                <Button type="submit" variant="contained" color="primary" onClick={signIn}>
+                <Button type="submit" variant="contained"  onClick={signIn} style={{backgroundColor: "#696969"}}>
                   Συνδεση
                 </Button>
               </div>
@@ -95,7 +95,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               &nbsp; ή &nbsp;
               <Link href="signup">
-                <a href="">Εγγραφή</a>
+                <a style={{ textDecoration: "underline", color: "#76a68f" }} href="">Εγγραφή</a>
               </Link>
             </div>
 

@@ -74,7 +74,7 @@ import React, {
             showNotification(
               'error',
               'Σφάλμα ',
-              'Παρακαλόυμε εισάγετε σωστό email'
+              'Παρακαλόυμε εισάγετε σωστή διεύθυνση email'
             );
   
           }
@@ -119,29 +119,29 @@ import React, {
       <Container style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', marginTop: '3%', padding: '4%' }}>
         <Card style={{ minWidth: 500 }}>
           <div style={{ padding: '5%' }}>
-            <Typography variant="h5" color="text.secondary" style={{ marginBottom: '5%', textAlign: 'center' }} >
-              Εγγραφείτε στο σύστημα .
+            <Typography variant="h5" style={{ marginBottom: '5%', textAlign: 'center', color: "#494949", fontFamily: "Oxygen" }} >
+              Εγγραφείτε στο σύστημα
             </Typography>
             <form method="POST" action="javascript:void(0);" > 
             <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-              <TextField onChange={handleName} size="small" label="Name" variant="outlined"  />
+              <TextField onChange={handleName} size="small" label="Όνομα" variant="outlined"  />
             </Box>
             <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-              <TextField onChange={handleLastName} size="small" label="Lastname" variant="outlined"  />
+              <TextField onChange={handleLastName} size="small" label="Επώνυμο" variant="outlined"  />
             </Box>
             <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-              <TextField onChange={handleEmail} size="small" label="email" variant="outlined" type="email" />
+              <TextField onChange={handleEmail} size="small" label="Email" variant="outlined" type="email" />
             </Box>
             <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-              <TextField onChange={handlePass} size="small" label="password" variant="outlined" type="password" />
+              <TextField onChange={handlePass} size="small" label="Κωδικός" variant="outlined" type="password" />
             </Box>
             <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
-              <TextField onChange={handleConfirmPass} size="small" label="Confirm password" variant="outlined" type="password" />
+              <TextField onChange={handleConfirmPass} size="small" label="Επανάληψη κωδικού" variant="outlined" type="password" />
             </Box>
   
   
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
-              <Button type="submit" variant="contained" color="primary" onClick={signIn}>
+              <Button type="submit" variant="contained"  onClick={signIn} style={{backgroundColor: "#696969"}}>
                 Εγγραφη
               </Button>
             </div>
@@ -149,7 +149,7 @@ import React, {
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               &nbsp; ή &nbsp;
               <Link href="/">
-                <a href="">Σύνδεση</a>
+                <a  style={{ textDecoration: "underline", color: "#76a68f" }} href="">Σύνδεση</a>
               </Link>
             </div>
   

@@ -1,13 +1,9 @@
 import {
     React, useState, useContext, useEffect,
   } from 'react';
-  //import router from 'next/router';
-  // eslint-disable-next-line import/no-extraneous-dependencies
+ 
   import { Box,Typography,Button,Toolbar,AppBar } from '@mui/material';
-  // eslint-disable-next-line import/no-cycle
-  //import { MyContext } from '../../pages/_app';
-  
-
+ 
   
   export default function AppHeader() {
    
@@ -17,7 +13,7 @@ import {
       <>
       
           <div sx={{      flexGrow: 1        }}>
-            <AppBar sx={{    bgColor: '#194b8c', position: "static"}} style={{ height: 95 }}>
+            <AppBar sx={{    backgroundColor: '#85b09c', position: "static"}} style={{ height: 95 }}>
               <Toolbar style={{ alignItems: 'center', height: 95 }}>
                 <Typography
                   type="title"
@@ -35,7 +31,7 @@ import {
                     style={{ textTransform: 'none', textDecoration: 'none', color: 'white' }}
                     color="inherit"
                   >
-                    <h4>{'Αναζήτηση στην Δημοσιότητα ΓΕΜΗ'}</h4>
+                    <h4>{'Ενα εργαλείο διαχείρησης εκπαιδευτικών εργασιών'}</h4>
                   </Button>
                 </Typography>
                 <Button
@@ -43,25 +39,7 @@ import {
                   aria-controls="simple-menu"
                   aria-haspopup="true"
                   style={{ textTransform: 'none' }}
-                >
-                    <Box display="flex" justifyItems="center" textAlign="center">
-                      {'Ελληνικά'}
-                    </Box>
-                    <Box display="flex" justifyItems="center" textAlign="center">
-                      {'English'}
-                    </Box>
-                  
-                    <Box display="flex" justifyItems="center" textAlign="center">
-                      {'Français'}
-                    </Box>
-               
-                    <Box display="flex" justifyItems="center" textAlign="center">
-                      {'Deutsch'}
-                    </Box>
-                 
-                    <Box display="flex" justifyItems="center" textAlign="center">
-                      {'Italiano'}
-                    </Box>
+                > 
                   
                 </Button>
               </Toolbar>
