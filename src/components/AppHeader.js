@@ -13,7 +13,7 @@ import {
       <>
       
           <div sx={{      flexGrow: 1        }}>
-            <AppBar sx={{    backgroundColor: '#85b09c', position: "static"}} style={{ height: 95 }}>
+            <AppBar sx={{    backgroundColor: '#e28743', position: "static"}} style={{ height: 95 }}>
               <Toolbar style={{ alignItems: 'center', height: 95 }}>
                 <Typography
                   type="title"

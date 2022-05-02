@@ -13,7 +13,7 @@ export default function AppFooter() {
     
     <footer>
       <Box sx={{   
-          bgcolor: '#85b09c',
+          bgcolor: '#e28743',
           maxWidth	: '100%',
           left: 0,
           bottom: 0,

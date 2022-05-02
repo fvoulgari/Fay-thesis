@@ -152,27 +152,26 @@ export default function Test({ repos }) {
 
   return (
     <>
-      <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2%', marginTop: '2%', padding: '3%' }}>
-        <Card style={{ minWidth: '700px' }}>
-          <div style={{ padding: '5%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+        <Typography variant="h4" style={{ marginTop: '3%', color:'white' }} >
+          Δημιουργία αποθετηρίων
+        </Typography>
+    </div>
+      <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', marginBottom: '2%', padding: '3%' }}>
+        <Card style={{ minWidth: '450px' }}>
+          <div>
 
-              <Typography variant="h6" style={{ marginBottom: '5%' }} >
-                Δημιουργήστε αποθετήρια
-              </Typography>
-            </div>
-            
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '8%' }}>
                 <label htmlFor="contained-test-button-file">
                   <Input id="contained-test-button-file" accept=".csv"  type="file" onChange={handleCsvFileChange} />
-                  <Button type="submit" color="primary" variant="contained" component="span" style={{ marginRight: '4%', minWidth: 220 }}>
+                  <Button type="submit" color="primary" variant="contained" component="span" style={{ marginRight: '4%', marginTop: '8%', minWidth: 220}}>
                     CSV μαθητων
                   </Button>
                 </label>
               </div>
 
             <form method="POST" action="javascript:void(0);" style={{ minWidth: '550px', width: '100%', justifyContent: 'center', }} >
-              <Box style={{ display: 'flex', minWidth: '550px', width: '100%', justifyContent: 'center', }}>
+              <Box style={{ display: 'flex', minWidth: '550px', width: '100%', justifyContent: 'center' }}>
                 <FormControl sx={{ m: 1, minWidth: 220 }}>
                   <InputLabel id="demo-simple-select-helper-label">Template Repositories</InputLabel>
 

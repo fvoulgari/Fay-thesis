@@ -69,15 +69,15 @@ export default function Home() {
 
   return (
     <>
-      <Container maxWidth="md" style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', marginTop: '3%', padding: '4%'  }}>
+    <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+        <Typography variant="h4" style={{ marginTop: '3%', color:'white' }} >
+        Συνδεθείτε στο σύστημα
+        </Typography>
+    </div>
+      <Container maxWidth="md" style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', padding: '4%'  }}>
         <Card style={{ maxWidth: 700, minWidth: 400 }}>
           <div style={{ padding: '5%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-
-              <Typography variant="h5" style={{ marginBottom: '5%', fontFamily: "oxygen", color: "#494949"}} >
-                Συνδεθείτε στο σύστημα
-              </Typography>
-            </div>
+            
             <form method="POST" action="javascript:void(0);" >
               <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
                 <TextField size="small" label="Email" variant="outlined" type="email" onChange={handleEmail} />
@@ -87,7 +87,7 @@ export default function Home() {
               </Box>
 
               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
-                <Button type="submit" variant="contained"  onClick={signIn} style={{backgroundColor: "#696969"}}>
+                <Button type="submit" variant="contained"  onClick={signIn} >
                   Συνδεση
                 </Button>
               </div>
@@ -95,7 +95,7 @@ export default function Home() {
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               &nbsp; ή &nbsp;
               <Link href="signup">
-                <a style={{ textDecoration: "underline", color: "#76a68f" }} href="">Εγγραφή</a>
+                <a style={{ textDecoration: "underline", color: "#e28743" }} href="">Εγγραφή</a>
               </Link>
             </div>
 

@@ -116,12 +116,16 @@ import React, {
   
   
     return (
-      <Container style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', marginTop: '3%', padding: '4%' }}>
-        <Card style={{ minWidth: 500 }}>
+      <>
+    <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+        <Typography variant="h4" style={{ marginTop: '3%', color:'white' }} >
+        Εγγραφείτε στο σύστημα
+        </Typography>
+    </div>
+
+      <Container style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', padding: '4%' }}>
+        <Card style={{ minWidth: 400 }}>
           <div style={{ padding: '5%' }}>
-            <Typography variant="h5" style={{ marginBottom: '5%', textAlign: 'center', color: "#494949", fontFamily: "Oxygen" }} >
-              Εγγραφείτε στο σύστημα
-            </Typography>
             <form method="POST" action="javascript:void(0);" > 
             <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
               <TextField onChange={handleName} size="small" label="Όνομα" variant="outlined"  />
@@ -141,7 +145,7 @@ import React, {
   
   
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
-              <Button type="submit" variant="contained"  onClick={signIn} style={{backgroundColor: "#696969"}}>
+              <Button type="submit" variant="contained"  onClick={signIn} >
                 Εγγραφη
               </Button>
             </div>
@@ -149,13 +153,14 @@ import React, {
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
               &nbsp; ή &nbsp;
               <Link href="/">
-                <a  style={{ textDecoration: "underline", color: "#76a68f" }} href="">Σύνδεση</a>
+                <a  style={{ textDecoration: "underline", color: "#e28743" }} href="">Σύνδεση</a>
               </Link>
             </div>
   
           </div>
         </Card>
       </Container>
+      </>
     )
   }
   
