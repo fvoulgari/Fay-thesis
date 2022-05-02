@@ -1,6 +1,7 @@
 import React, {
   useState, useEffect, useContext, useMemo,
 } from 'react';
+import _ from 'lodash';
 import { getTemplates } from '../Lib/dao';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -26,7 +27,7 @@ const Input = styled('input')({
 });
 
 export default function Test({ repos }) {
-  const [templateRepo, setTemplateRepo] = React.useState('');
+  const [templateRepo, setTemplateRepo] = useState(null);
   const router = useRouter();
   const [repo, setRepo] = useState([]);
   const [files, setFiles] = useState({ files: [] });
@@ -70,7 +71,7 @@ export default function Test({ repos }) {
 
 
   const InitializeStudentsRepository = async () => {
-  if(templateRepo){
+  if(templateRepo && !(_(csvfiles.csv).isEmpty()) ){
 
   
     const formData = new FormData(); formData.append(
@@ -82,7 +83,7 @@ export default function Test({ repos }) {
     }
   
 
-    const res = await fetch('/api/test', {
+    const res = await fetch('/api/initializeStudentRepos', {
       method: 'POST',
       body: formData,
     });

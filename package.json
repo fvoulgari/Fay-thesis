@@ -20,6 +20,7 @@
     "antd": "^4.19.5",
     "axios": "^0.26.1",
     "child_process": "^1.0.2",
+    "csv-parse": "^5.0.4",
     "formidable": "^2.0.1",
     "fs": "^0.0.1-security",
     "loadash": "^1.0.0",
