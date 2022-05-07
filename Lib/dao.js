@@ -27,7 +27,7 @@ export async function configShow() {
 
 
 
-export async function getTemplates() {
+export async function getRepos() {
     let client;
     let rows = [];
     const { error, stdout, stderr } = await util.promisify(exec)("gh repo list teaching-assistant-uop --json name,isTemplate");
@@ -49,8 +49,9 @@ export async function getTemplates() {
 
 
 export async function InitializeStudentsRepositories(repo, file) {
+    // Σώζουμε το αρχείο csv στο /tmp χρησιμοποιώντας την fs.rename() 
+    // Σε όλες τις ασύχρονες συναρτήσεις χρησιμοποιούμε την util.promisfy για να κάνουμε await μέχρι να τελειώσουν. 
     await util.promisify(fs.rename)(file.file.filepath, '/tmp' + '/' + file.file.originalFilename);
-
     const content = await util.promisify(fs.readFile)("/tmp/" + file.file.originalFilename);
     const records = await util.promisify(parse)(content);
     const { error, stdout, stderr } = await util.promisify(exec)(`rm -rf  /root/.repobee/env/src/repobee_testhelpers/resources/students.txt`);
@@ -63,6 +64,7 @@ export async function InitializeStudentsRepositories(repo, file) {
         console.log(`stderr: ${stderr}`);
         return;
     }
+    // Αφού διαγράψουμε το παλιό students.txt το ξαναφτιάχνουμε με τα στοιχεία που υπάρχουν στο csv στην τέταρτη στήλη. 
     for (let temp of records.slice(1, records.length)) {
 
         await util.promisify(fs.appendFile)('/root/.repobee/env/src/repobee_testhelpers/resources/students.txt', temp[3] + '\n')
@@ -70,6 +72,7 @@ export async function InitializeStudentsRepositories(repo, file) {
 
 
     
+    // Μέσω του repobee αρχικοποιούμε τα repositories των μαθητών που βρίσκονται στο csv με βάση το template repo  
 
     const { errorRep, stdoutRep, stderrRep } = await util.promisify(exec)(` repobee repos setup --assignments  ${repo} --sf /root/.repobee/env/src/repobee_testhelpers/resources/students.txt `);
     if (errorRep) {
@@ -82,6 +85,7 @@ export async function InitializeStudentsRepositories(repo, file) {
         return;
     }
 
+    // Διαγράφουμε το αρχείο csv από το  /tmp 
 
     const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rf  /tmp/` + file.file.originalFilename);
     if (errorRM) {
@@ -102,6 +106,8 @@ export async function InitializeStudentsRepositories(repo, file) {
 
 
 export async function initializeTemplateProject(repo, files) {
+    // Δημιουργόυμε στο /tmp έναν καινουργίο φάκελο 
+    // Σε όλες τις ασύχρονες συναρτήσεις χρησιμοποιούμε την util.promisfy για να κάνουμε await μέχρι να τελειώσουν. 
     const { errorMk, stdoutMk, stderrMk } = await util.promisify(exec)(`mkdir /tmp/newrepo `);
     if (errorMk) {
         console.log(`error: ${errorMk.message}`);
@@ -112,20 +118,20 @@ export async function initializeTemplateProject(repo, files) {
         console.log(`stderr: ${stderrMk}`);
         return;
     }
-
+    //Ελέγχουμε αν υπάρχουν φάκελοι 
     if (files) {
         if (files.file) {
+            //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
             if (Array.isArray(files.file)) {
                 for (let file of files.file) {
                     await util.promisify(fs.rename)(file.filepath, '/tmp/newrepo' + '/' + file.originalFilename);
                 }
             }
             else {
-                console.log(files)
-                console.log('here is path')
                 await util.promisify(fs.rename)(files.file.filepath, '/tmp/newrepo' + '/' + files.file.originalFilename);
             }
         }
+        //Ελέγχουμε αν υπάρχουν φάκελοι που πρέπει αν μπουν στο github workflows
         if (files.testFile) {
             const { errorMkGit, stdoutMkGit, stderrMkGit } = await util.promisify(exec)(`mkdir -p /tmp/newrepo/.github/workflows `);
             if (errorMkGit) {
@@ -137,7 +143,7 @@ export async function initializeTemplateProject(repo, files) {
                 console.log(`stderr: ${stderrMkGit}`);
                 return;
             }
-
+            //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
             if (Array.isArray(files.testFile)) {
                 for (let file of files.testFile) {
                     await util.promisify(fs.rename)(file.filepath, '/tmp/newrepo/.github/workflows' + '/' + file.originalFilename);
@@ -151,6 +157,7 @@ export async function initializeTemplateProject(repo, files) {
     }
 
 
+     //Δημιουργούμε private repository στον οργανισμό με το όνομα που δήλωθηκε
 
     const { error, stdout, stderr } = await util.promisify(exec)(`gh repo create teaching-assistant-uop/${repo} --private `);
     if (error) {
@@ -163,6 +170,7 @@ export async function initializeTemplateProject(repo, files) {
         return;
     }
 
+     //Κάνουμε cd στο /opt/scripts και τρέχουμε το github.sh το οποίο αρχικοποεί το repository με τα αρχεία που έχουμε στο /tmp/newrepo
 
     const { errorGit, stdoutGit, stderrGit } = await util.promisify(exec)(`cd /opt/scripts && ./github.sh  teaching-assistant-uop ${repo} `);
     if (errorGit) {
@@ -175,6 +183,7 @@ export async function initializeTemplateProject(repo, files) {
         return;
     }
 
+     //Κάνουμε edit στο repository ώστε να το κάνουμε template μέσω το github cli
 
     const { errorEdit, stdoutEdit, stderrEdit } = await util.promisify(exec)(`gh repo edit teaching-assistant-uop/${repo} --template `);
     if (errorEdit) {
@@ -186,7 +195,8 @@ export async function initializeTemplateProject(repo, files) {
         console.log(`stderr: ${stderrEdit}`);
         return;
     }
-
+    
+    // Διαγράφουμε τα αρχεία που φτιάξαμε
     const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf  /tmp/newrepo `);
     if (errorRM) {
         console.log(`error: ${errorRM.message}`);
@@ -202,54 +212,3 @@ export async function initializeTemplateProject(repo, files) {
 
 
 }
-
-
-
-export async function pushFileTorepo(repo, path, files) {
-    let client;
-    let rows = [];
-    const { error, stdout, stderr } = await util.promisify(exec)(`mkdir /tmp/newrepo `);
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-
-    const { errorEdit, stdoutEdit, stderrEdit } = await util.promisify(exec)(`gh repo edit teaching-assistant-uop/${name} --template `);
-    if (errorEdit) {
-        console.log(`error: ${errorEdit.message}`);
-        return;
-
-    }
-    if (stderrEdit) {
-        console.log(`stderr: ${stderrEdit}`);
-        return;
-    }
-
-
-
-
-
-
-    const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf  /tmp/newrepo `);
-    if (errorRM) {
-        console.log(`error: ${errorRM.message}`);
-        return;
-
-    }
-    if (stderrRM) {
-        console.log(`stderr: ${stderrRM}`);
-        return;
-    }
-
-    return null;
-
-
-}
-
-
-

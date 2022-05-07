@@ -4,7 +4,6 @@ import Image from 'next/image';
 import {
   Grid, Box, Typography, Link,
 } from '@mui/material';
-import moment from 'moment';
 
 
 export default function AppFooter() {
