@@ -49,12 +49,19 @@ export async function getRepos() {
 
 
 export async function InitializeStudentsRepositories(repo, file) {
+
     // Σώζουμε το αρχείο csv στο /tmp χρησιμοποιώντας την fs.rename() 
     // Σε όλες τις ασύχρονες συναρτήσεις χρησιμοποιούμε την util.promisfy για να κάνουμε await μέχρι να τελειώσουν. 
     await util.promisify(fs.rename)(file.file.filepath, '/tmp' + '/' + file.file.originalFilename);
     const content = await util.promisify(fs.readFile)("/tmp/" + file.file.originalFilename);
     const records = await util.promisify(parse)(content);
-    const { error, stdout, stderr } = await util.promisify(exec)(`rm -rf  /root/.repobee/env/src/repobee_testhelpers/resources/students.txt`);
+
+
+
+
+
+
+    const { error, stdout, stderr } = await util.promisify(exec)(`if [ -f "/opt/scripts/students.txt" ]; then rm -rf /opt/scripts/students.txt ; fi`);
     if (error) {
         console.log(`error: ${error.message}`);
         return;
@@ -66,15 +73,16 @@ export async function InitializeStudentsRepositories(repo, file) {
     }
     // Αφού διαγράψουμε το παλιό students.txt το ξαναφτιάχνουμε με τα στοιχεία που υπάρχουν στο csv στην τέταρτη στήλη. 
     for (let temp of records.slice(1, records.length)) {
+        console.log(temp)
 
-        await util.promisify(fs.appendFile)('/root/.repobee/env/src/repobee_testhelpers/resources/students.txt', temp[3] + '\n')
+        await util.promisify(fs.appendFile)('/opt/scripts/students.txt', temp[3] + '\n')
     }
 
 
     
     // Μέσω του repobee αρχικοποιούμε τα repositories των μαθητών που βρίσκονται στο csv με βάση το template repo  
 
-    const { errorRep, stdoutRep, stderrRep } = await util.promisify(exec)(` repobee repos setup --assignments  ${repo} --sf /root/.repobee/env/src/repobee_testhelpers/resources/students.txt `);
+    const { errorRep, stdoutRep, stderrRep } = await util.promisify(exec)(` repobee repos setup --assignments  ${repo} --sf /opt/scripts/students.txt `);
     if (errorRep) {
         console.log(`error: ${errorRep.message}`);
         return;
@@ -107,7 +115,18 @@ export async function InitializeStudentsRepositories(repo, file) {
 
 export async function initializeTemplateProject(repo, files) {
     // Δημιουργόυμε στο /tmp έναν καινουργίο φάκελο 
-    // Σε όλες τις ασύχρονες συναρτήσεις χρησιμοποιούμε την util.promisfy για να κάνουμε await μέχρι να τελειώσουν. 
+    // Σε όλες τις ασύχρονες συναρτήσεις χρησιμοποιούμε την util.promisfy για να κάνουμε await μέχρι να τελειώσουν.
+    
+    const { errorcheck, stdoutcheck, stderrcheck } = await util.promisify(exec)(`if [ -d "/tmp/newrepo" ]; then rm -rf /tmp/newrepo ; fi `);
+    if (errorcheck) {
+        console.log(`error: ${errorcheck.message}`);
+        return;
+
+    }
+    if (stderrcheck) {
+        console.log(`stderr: ${stderrcheck}`);
+        return;
+    }
     const { errorMk, stdoutMk, stderrMk } = await util.promisify(exec)(`mkdir /tmp/newrepo `);
     if (errorMk) {
         console.log(`error: ${errorMk.message}`);

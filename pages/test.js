@@ -32,7 +32,7 @@ export default function Test({ repos }) {
 
   const InitializeRepository = async () => {
 
-    const formData = new FormData(); 
+    const formData = new FormData();
     formData.append(
       'formData',
       JSON.stringify({ name: repo })
@@ -57,6 +57,8 @@ export default function Test({ repos }) {
 
 
   const InitializeStudentsRepository = async () => {
+
+
     if (templateRepo && !(_(csvfiles.csv).isEmpty())) {
 
       // Αρχικοποιούμε ένα FormData object  και του περνάμε το επιλεγμένο templateRepo και τα csv files.
@@ -109,7 +111,9 @@ export default function Test({ repos }) {
     console.log(files)
     console.log(repo)
     console.log(testfiles)
-  }, [files, testfiles, repo]);
+    console.log(csvfiles)
+
+  }, [files, testfiles, repo, csvfiles]);
 
 
   return (
@@ -119,13 +123,19 @@ export default function Test({ repos }) {
           Δημιουργία & αρχικοποίηση αποθετηρίων
         </Typography>
       </div>
-      <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center',paddingTop: '6%',  marginBottom: '2%', padding: '3%' }}>
+      <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '6%', marginBottom: '2%', padding: '3%' }}>
         <Card style={{ minWidth: '450px', paddingTop: '3%', marginRight: '2%' }}>
           <div>
-            
+           
+
             <form method="POST" action="javascript:void(0);" style={{ minWidth: '550px', width: '100%', justifyContent: 'center' }} >
-              
-              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '8%' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
+              <Box >
+                <TextField size="small" label="Repository Name" variant="outlined" type="text" onChange={handleRepo} style={{ marginRight: '2%' }} />
+              </Box>
+
+            </div>
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '2%' }}>
                 <label htmlFor="contained-button-file">
                   <Input id="contained-button-file" multiple type="file" onChange={handleFileChange} />
                   <Button type="submit" color="primary" variant="contained" component="span" style={{ marginRight: '4%', minWidth: 220 }}>
@@ -138,31 +148,29 @@ export default function Test({ repos }) {
                 <label htmlFor="contained-test-button-file">
                   <Input id="contained-test-button-file" multiple type="file" onChange={handleTestFileChange} />
                   <Button type="submit" color="primary" variant="contained" component="span" style={{ marginRight: '4%', minWidth: 220 }}>
-                    Επιλογη αρχειων test
+                    Επιλογη αρχειων yml
                   </Button>
                 </label>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
-                <Box >
-                  <TextField size="small" label="Repository Name" variant="outlined" type="text" onChange={handleRepo} style={{ marginRight: '2%' }} />
-                </Box>
-                <Button type="submit" variant="contained" color="primary" onClick={InitializeRepository} >
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '8%' }}>
+                <Button type="submit" variant="contained" color="warning" onClick={InitializeRepository} >
                   Αρχικοποιηση
                 </Button>
               </div>
+
 
             </form>
 
 
           </div>
         </Card>
-        <Card style={{ minWidth: '450px' , paddingTop: '3%', marginLeft: '2%'  }}>
+        <Card style={{ minWidth: '450px', paddingTop: '3%', marginLeft: '2%' }}>
           <div>
             {/* Βάζοντας το Button και το styled input μαζί φροντίζουμε να έχουμε ως UI το button και να έχουμε ταυτόχρονα τις 
           λειτουργικότητες του input για να πάρουμε τα csv files */ }
             <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '4%' }}>
-              <label htmlFor="contained-test-button-file">
-                <Input id="contained-test-button-file" accept=".csv" type="file" onChange={handleCsvFileChange} />
+              <label htmlFor="contained-csv-button-file">
+                <Input id="contained-csv-button-file" accept=".csv" type="file" onChange={handleCsvFileChange} />
                 <Button type="submit" color="primary" variant="contained" component="span" style={{ marginRight: '4%', marginTop: '5%', minWidth: 220 }}>
                   CSV μαθητων
                 </Button>
@@ -191,7 +199,7 @@ export default function Test({ repos }) {
               </Box>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '2%', width: '100%' }}>
                 <Button type="submit" variant="contained" color="primary" onClick={InitializeStudentsRepository}>
-                Δημιουργια 
+                  Δημιουργια
                 </Button>
               </div>
             </form>
