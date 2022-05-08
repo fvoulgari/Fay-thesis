@@ -124,6 +124,8 @@ export default function Test({ repos }) {
         </Typography>
       </div>
       <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '6%', marginBottom: '2%', padding: '3%' }}>
+
+        {/* Αριστερή Κάρτα - Δημιουργία και αρχικοποίηση template repository */}
         <Card style={{ minWidth: '450px', paddingTop: '3%', marginRight: '2%' }}>
           <div>
            
@@ -164,6 +166,7 @@ export default function Test({ repos }) {
 
           </div>
         </Card>
+        {/* Δεξιά Κάρτα - Δημιουργία και αρχικοποίηση  repositories φοιτητών */}
         <Card style={{ minWidth: '450px', paddingTop: '3%', marginLeft: '2%' }}>
           <div>
             {/* Βάζοντας το Button και το styled input μαζί φροντίζουμε να έχουμε ως UI το button και να έχουμε ταυτόχρονα τις 
@@ -198,7 +201,7 @@ export default function Test({ repos }) {
                 </FormControl>
               </Box>
               <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '2%', width: '100%' }}>
-                <Button type="submit" variant="contained" color="primary" onClick={InitializeStudentsRepository}>
+                <Button type="submit" variant="contained" color="warning" onClick={InitializeStudentsRepository}>
                   Δημιουργια
                 </Button>
               </div>

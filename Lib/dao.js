@@ -4,26 +4,6 @@ import fs from "fs";
 import { parse } from 'csv-parse';
 import { exec } from 'child_process'
 
-export async function configShow() {
-    let client;
-    let rows = [];
-    exec("repobee config show ", (error, stdout, stderr) => {
-        if (error) {
-            console.log(`error: ${error.message}`);
-            return;
-        }
-        if (stderr) {
-            console.log(`stderr: ${stderr}`);
-            return;
-        }
-        console.log(`stdout: ${stdout}`);
-    });
-
-    console.log('here')
-
-
-    return null;
-}
 
 
 
@@ -57,10 +37,6 @@ export async function InitializeStudentsRepositories(repo, file) {
     const records = await util.promisify(parse)(content);
 
 
-
-
-
-
     const { error, stdout, stderr } = await util.promisify(exec)(`if [ -f "/opt/scripts/students.txt" ]; then rm -rf /opt/scripts/students.txt ; fi`);
     if (error) {
         console.log(`error: ${error.message}`);
@@ -73,8 +49,7 @@ export async function InitializeStudentsRepositories(repo, file) {
     }
     // Αφού διαγράψουμε το παλιό students.txt το ξαναφτιάχνουμε με τα στοιχεία που υπάρχουν στο csv στην τέταρτη στήλη. 
     for (let temp of records.slice(1, records.length)) {
-        console.log(temp)
-
+        
         await util.promisify(fs.appendFile)('/opt/scripts/students.txt', temp[3] + '\n')
     }
 
@@ -202,7 +177,7 @@ export async function initializeTemplateProject(repo, files) {
         return;
     }
 
-     //Κάνουμε edit στο repository ώστε να το κάνουμε template μέσω το github cli
+     //Κάνουμε edit στο repository ώστε να το κάνουμε template μέσω του github cli
 
     const { errorEdit, stdoutEdit, stderrEdit } = await util.promisify(exec)(`gh repo edit teaching-assistant-uop/${repo} --template `);
     if (errorEdit) {
