@@ -1,8 +1,11 @@
 import * as  util from 'util';
 import _ from 'lodash';
-import fs from "fs";
+import  pool  from './dbconfig'
+import  fs from 'fs'
 import { parse } from 'csv-parse';
 import { exec } from 'child_process'
+
+// TODO #1 make dev and prod envs for connecting to DB
 
 
 
@@ -26,6 +29,178 @@ export async function getRepos() {
 
 
 }
+
+
+export async function checkClass(user, orgName) {
+    let client;
+    let rows = [];
+
+    var { error, stdout, stderr } = await util.promisify(exec)(`gh api -H "Accept: application/vnd.github.v3+json" /user/orgs --jq ".[].login" `);
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return false; 
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return false;
+    }
+    const orgs = stdout.split('\n');
+    orgs.pop()
+
+    if(!orgs.includes(orgName)) return false
+
+    var { error, stdout, stderr } = await util.promisify(exec)(`gh api  -H "Accept: application/vnd.github.v3+json"  /orgs/${orgName}/members --jq ".[].login"`);
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return false;
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return false;
+    }
+
+    const member = stdout.split('\n');
+    member.pop();
+    if(!member.includes(user)) return false
+
+
+    return true;
+
+
+}
+export async function getActiveOrganizations() {
+    
+    const { error, stdout, stderr } = await util.promisify(exec)(" gh api  /user/memberships/orgs  --jq '.[].organization.login'");
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    const orgs = stdout.split('\n');
+    orgs.pop()
+    const activeOrgs = []
+    let client;
+	let rows = [];
+   
+
+
+    for (let org of orgs){
+        client = await pool.connect();
+		let result = await client.query(
+			`
+            select * from organizations  where githubname=$1 and active is true 
+            `,
+			[org]
+		);
+		
+		rows = result.rows;
+        console.log(org)
+        console.log(rows)
+        if(rows.length >0){
+            activeOrgs.push(rows[0].githubname)
+        }
+    }
+
+    return activeOrgs;
+}
+
+export async function getOrganizations() {
+    
+    const { error, stdout, stderr } = await util.promisify(exec)(" gh api  /user/memberships/orgs  --jq '.[].organization.login'");
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    const orgs = stdout.split('\n');
+    orgs.pop()
+    return orgs;
+}
+
+export async function createOrganizations(org ) {
+    const myOrgs = getOrganizations();
+
+    const { error, stdout, stderr } = await util.promisify(exec)( ` gh api   --method PATCH   -H "Accept: application/vnd.github.v3+json"   /orgs/${myOrgs[0]}   -f name='${org}'`);
+
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    const orgs = stdout.split('\n');
+    orgs.pop()
+    return orgs;
+}
+
+export async function enterOrganization(name, email) {
+    let client;
+	let rows = [];
+    client = await pool.connect();
+		let result = await client.query(
+			`
+            select * from users  where email=$1
+            `,
+			[email]
+		);
+		
+		rows = result.rows;
+
+
+     
+    const { error, stdout, stderr } = await util.promisify(exec)( ` gh api   --method POST  -H "Accept: application/vnd.github.v3+json" /orgs/${name}/invitations -f email=${email} -f role=admin`);
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    const orgs = stdout.split('\n');
+    orgs.pop()
+    
+    return null;
+
+
+}
+
+
+
+export async function createOrganization() {
+    let client;
+    let rows = [];
+    const { error, stdout, stderr } = await util.promisify(exec)(" gh api  /user/memberships/orgs  --jq '.[].organization.login'");
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    const orgs = stdout.split('\n');
+    orgs.pop()
+    return orgs;
+
+
+}
+
 
 
 export async function InitializeStudentsRepositories(repo, file) {
