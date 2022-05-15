@@ -1,5 +1,5 @@
 import React, {
-    useState, useEffect,
+    useState, 
 } from 'react';
 import { useRouter } from 'next/router';
 import _ from 'lodash';
@@ -7,47 +7,23 @@ import PermanentDrawerLeft from '../../src/components/PermanentDrawerLeft';
 import CircularProgressWithLabel from '../../src/components/CircularProgressWithLabel';
 // import { getActiveOrganizations } from '../Lib/dao';
 import {
-    Button,
-    TextField,
     Container,
     Typography,
     Card,
-    Box,
-    Avatar,
-    Select,
-    CardHeader,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Table,
-    IconButton,
-    List,
-    ListItem,
-    ListItemAvatar,
     TableBody,
     TableCell,
-    ListItemText,
     tableCellClasses,
     TableContainer,
     TableHead,
     TableRow,
-    Checkbox,
     Paper
 } from '@mui/material';
-import { checkClass, getTeams } from '../../Lib/dao';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import DeleteIcon from '@mui/icons-material/Delete';
+import {  getTeams } from '../../Lib/dao';
 import { styled } from '@mui/material/styles';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import CheckBoxOutlineBlankRoundedIcon from '@mui/icons-material/CheckBoxOutlineBlankRounded';
-import CheckBoxRoundedIcon from '@mui/icons-material/CheckBoxRounded';
-import showNotification from '../../Lib/notification'
-import { fontSize } from '@mui/system';
 
-const myOrgs = []
-const Input = styled('input')({
-    display: 'none',
-});
+
+
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -59,19 +35,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     },
 }));
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-    '&:nth-of-type(odd)': {
-        backgroundColor: theme.palette.action.hover,
-    },
-    // hide last border
-    '&:last-child td, &:last-child th': {
-        border: 0,
-    },
-}));
+
 
 export default function Class({ name, teams, labProgress }) {
     const router = useRouter();
-    const [progress, setProgress] = useState(60);
 
 
 
@@ -87,55 +54,60 @@ export default function Class({ name, teams, labProgress }) {
     const tempTeams = [
         {
             team: 'Ομάδα 1', supervisor: 'Υπεύθυνος 1', labs: [
-                { progress: labProgress[0] },
-                { progress: labProgress[1] },
-                { progress: labProgress[2] },
-                { progress: labProgress[3] },
-                { progress: labProgress[4] },
+                { progress: labProgress[0], name: 'Άσκηση 1' },
+                { progress: labProgress[1], name: 'Άσκηση 2' },
+                { progress: labProgress[2], name: 'Άσκηση 3' },
+                { progress: labProgress[3], name: 'Άσκηση 4' },
+                { progress: labProgress[4], name: 'Άσκηση 5' },
             ]
         },
         {
             team: 'Ομάδα 2', supervisor: 'Υπεύθυνος 2', labs: [
-                { progress: labProgress[5] },
-                { progress: labProgress[6] },
-                { progress: labProgress[7] },
-                { progress: labProgress[8] },
-                { progress: labProgress[9] },
+                { progress: labProgress[5], name: 'Άσκηση 1' },
+                { progress: labProgress[6], name: 'Άσκηση 2' },
+                { progress: labProgress[7], name: 'Άσκηση 3' },
+                { progress: labProgress[8], name: 'Άσκηση 4' },
+                { progress: labProgress[9], name: 'Άσκηση 5' },
             ]
         },
         {
             team: 'Ομάδα 3', supervisor: 'Υπεύθυνος 3', labs: [
-                { progress: labProgress[10] },
-                { progress: labProgress[11] },
-                { progress: labProgress[12] },
-                { progress: labProgress[13] },
-                { progress: labProgress[14] }
+                { progress: labProgress[10], name: 'Άσκηση 1' },
+                { progress: labProgress[11], name: 'Άσκηση 2' },
+                { progress: labProgress[12], name: 'Άσκηση 3' },
+                { progress: labProgress[13], name: 'Άσκηση 4' },
+                { progress: labProgress[14], name: 'Άσκηση 5' }
             ]
         },
         {
             team: 'Ομάδα 4', supervisor: 'Υπεύθυνος 4', labs: [
-                { progress: labProgress[15] },
-                { progress: labProgress[16] },
-                { progress: labProgress[17] },
-                { progress: labProgress[18] },
-                { progress: labProgress[19] },
+                { progress: labProgress[15], name: 'Άσκηση 1' },
+                { progress: labProgress[16], name: 'Άσκηση 2' },
+                { progress: labProgress[17], name: 'Άσκηση 3' },
+                { progress: labProgress[18], name: 'Άσκηση 4' },
+                { progress: labProgress[19], name: 'Άσκηση 5' },
             ]
         },
         {
             team: 'Ομάδα 5', supervisor: 'Υπεύθυνος 5', labs: [
-                { progress: labProgress[20] },
-                { progress: labProgress[21] },
-                { progress: labProgress[22] },
-                { progress: labProgress[23] },
-                { progress: labProgress[24] },
+                { progress: labProgress[20], name: 'Άσκηση 1' },
+                { progress: labProgress[21], name: 'Άσκηση 2' },
+                { progress: labProgress[22], name: 'Άσκηση 3' },
+                { progress: labProgress[23], name: 'Άσκηση 4' },
+                { progress: labProgress[24], name: 'Άσκηση 5' },
             ]
         }
     ]
-
+    //Ανάλογα με την τιμή του porgress γυνάμε το κατάλληλο color
     function getColor(progress) {
         if (progress < 35) return 'error'
         if (progress >= 35 && progress < 70) return 'warning'
         return 'success'
+    }
+    //Με το εργαστήριο, την ομάδα και την άσκηση κάνουμε redirect σε μια συγκεκριμένη άσκηση
+    function handleCellClick(orgName,team,lab){
+        router.push({ pathname: `/class/${orgName}/${lab}`, query: { team: team } });
+
     }
 
 
@@ -176,10 +148,13 @@ export default function Class({ name, teams, labProgress }) {
                                                 <p style={{ color:`${row.supervisor=='Υπεύθυνος 1'? 'blue': 'black'}`}}>{row.supervisor=='Υπεύθυνος 1'?'H ομάδα μου':row.supervisor}</p>
                                             </StyledTableCell>
                                             {row.labs.map((column, index) => {
+                                                //Μέσα στο CingularProgess περνάμε το thicknessν, το χρώμα που θέλουμε με την getColor, το size και το progress 
                                                 return (
                                                     <TableCell
                                                         key={`${column.progress}-${index}`}
-
+                                                        //Όταν κάνουμε click σε ένα από τα cell καλούμε την HandleCellClick με παραμέτρους τον οργανισμό, την ομάδα, και την άσκηση
+                                                        onClick={()=>{handleCellClick(name,row.team, column.name)}}
+                                                        style={{ cursor: 'pointer'}}
                                                     >
                                                         <CircularProgressWithLabel thickness={5} color={getColor(column.progress)}
                                                             size="5em" value={column.progress} />
@@ -204,10 +179,9 @@ export default function Class({ name, teams, labProgress }) {
 
 
 export async function getServerSideProps(context) {
-    const KEY = process.env.JWT_KEY;
 
     const name = context.params.name;
-    const valid = checkClass('fvoulgari', name)
+    /*const valid = checkClass('fvoulgari', name)
     //Παίρνουμε όλα τα repos μέσω της getRepos(), έπειτα ελέγχουμε ποιά από αυτά είναι template και τα δίνουμε ως prop στο component  
     if (!valid) {
         return {
@@ -217,7 +191,7 @@ export async function getServerSideProps(context) {
             },
         };
     }
-
+*/
     const teamRows = await getTeams(name)
     console.log(teamRows, name)
     const teams = teamRows.map((team) => {
