@@ -17,7 +17,9 @@ export default function AppFooter() {
           left: 0,
           bottom: 0,
           width: '100%',
-          position: "relative" }} >
+          position: "relative",
+          height: '11vh',
+          }} >
         <Grid
           container
           spacing={0}
