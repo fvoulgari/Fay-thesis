@@ -16,6 +16,7 @@ export default async function handler(req, res) {
         form.parse(req, async function (err, fields, files) {
             const obj = JSON.parse(fields.formData)
             if (_.isEmpty(files) === false) {
+                //Αν υπάρχει csv στην φόρμα κάλούμε την createOrganizations με παράμετρο το csv αλλιώς την καλούμε χωρίς το csv
                 await createOrganizations(obj.className, obj.users, obj.checked, files);
                 res.json({
                     success: true,

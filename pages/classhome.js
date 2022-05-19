@@ -1,20 +1,14 @@
 import React, {
     useState, useEffect,
 } from 'react';
-import {useRouter} from 'next/router';
+import { useRouter } from 'next/router';
 import _ from 'lodash';
 import { getActiveOrganizations } from '../Lib/dao';
 import {
     Button,
-    TextField,
     Container,
     Typography,
     Card,
-    Box,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Table,
     TableBody,
     TableCell,
@@ -23,13 +17,10 @@ import {
     TableRow,
     Paper
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import showNotification from '../Lib/notification'
 
-const myOrgs=['TA-PythonLab']
-const Input = styled('input')({
-    display: 'none',
-});
+const myOrgs = ['TA-PythonLab']
+
 
 export default function ClassHome({ orgs }) {
     const router = useRouter();
@@ -37,24 +28,22 @@ export default function ClassHome({ orgs }) {
     function createData(name) {
         return { name };
     }
-
-    const active = orgs.filter((org) => !(org.startsWith('Uninitialized')))
-    const rows = active.map((org) => {
+    const rows = orgs.map((org) => {
         return (createData(org))
     })
 
 
-    
-    const signupInOrg = async (event) => {
+    const  enterOrg = async (event) => {
         const org = event.target.id
-        router.push('/class/' + org )
+        router.push('/class/' + org)
 
     }
-    const enterOrg = async (event) => {
+    //Καλούμε ένα api έτσι ώστε να γίνει invited στον οργανισμό ο χρήστης
+    const signupInOrg = async (event) => {
         const org = event.target.id
 
 
-        const res = await fetch('/api/enterOrg', {
+        const res = await fetch('/api/signupInOrg', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -62,13 +51,13 @@ export default function ClassHome({ orgs }) {
             },
             body: JSON.stringify({
                 name: org,
-                email: 'up1053649@upnet.gr'
+                email: 'fayrevof@gmail.com'
             })
         });
 
 
         const data = await res.json();
-        router.push('/class/' + org )
+        router.push('/class/' + org)
 
 
     }
@@ -84,12 +73,12 @@ export default function ClassHome({ orgs }) {
     return (
         <>
             <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                <Typography variant="h4" style={{ marginTop: '7%', color: 'white' }} >
+                <Typography variant="h4" style={{ marginTop: '4%', }} >
                     Δημιουργία  μαθήματος
                 </Typography>
             </div>
-            <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '6%', marginBottom: '2%', padding: '3%' }}>
-                <Card style={{ minWidth: '450px', paddingTop: '3%', marginLeft: '2%' }}>
+            <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '6%', padding: '3%' }}>
+                <Card style={{ minWidth: '450px', marginLeft: '2%' }}>
                     <TableContainer component={Paper}>
                         <Table sx={{ minWidth: 650 }} aria-label="caption table">
                             <TableHead>
@@ -107,15 +96,20 @@ export default function ClassHome({ orgs }) {
                                             {row.name}
                                         </TableCell>
                                         <TableCell align="right" component="th" scope="row">
-                                            <Button id={row.name} type="submit" variant="contained" color={myOrgs.includes(row.name)?"warning":"primary"} onClick={(event)=>{
-                                                console.log(row.name)
-                                                if(myOrgs.includes(row.name)){
-                                                    enterOrg(event)
-                                                } else{
-                                                    signupInOrg(event)
-                                                }
-                                            }}>
-                                                 {  (myOrgs.includes(row.name)) ? "Εισοδος": "Εγγραφη"}
+                                            <Button id={row.name}
+                                                type="submit"
+                                                variant="contained"
+                                                //Ελέγχουμε αν το active organization ανήκει στα organizations στα οποία ο χρήστης είναι owner
+                                                // και τροποποιούμε ανάλογα το περιεχόμενο της σελίδας
+                                                style={{ backgroundColor: myOrgs.includes(row.name) ? "#4caf50" : "#1976d2" }} 
+                                                onClick={(event) => {
+                                                    if (myOrgs.includes(row.name)) {
+                                                        enterOrg(event)
+                                                    } else {
+                                                        signupInOrg(event)
+                                                    }
+                                                }}>
+                                                {(myOrgs.includes(row.name)) ? "Εισοδος" : "Εγγραφη"}
 
                                             </Button>
                                         </TableCell>
@@ -136,9 +130,8 @@ export default function ClassHome({ orgs }) {
 }
 
 
-export async function getServerSideProps(context) {
-    const KEY = process.env.JWT_KEY;
-    //Παίρνουμε όλα τα repos μέσω της getRepos(), έπειτα ελέγχουμε ποιά από αυτά είναι template και τα δίνουμε ως prop στο component  
+export async function getServerSideProps() {
+    //Παίρνουμε όλους τους ενεργούς οργανισμούς  μέσω της getActiveOrganizations()
     const orgs = await getActiveOrganizations();
     //const myOrgs = await listUserOrganizations
 

@@ -12,13 +12,13 @@ export default function AppFooter() {
     
     <footer>
       <Box sx={{   
-          bgcolor: '#e28743',
+          bgcolor: 'rgb(255, 255, 255)',
           maxWidth	: '100%',
           left: 0,
           bottom: 0,
           width: '100%',
           position: "relative",
-          height: '11vh',
+          height: '13vh',
           }} >
         <Grid
           container

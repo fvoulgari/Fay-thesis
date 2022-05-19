@@ -67,17 +67,19 @@ export default function CreateClass() {
     const router = useRouter();
     const [className, setClassName] = useState([]);
     const [checked, setChecked] = useState(false);
-    const [name, setName] = useState([]);
+    const [email, setEmail] = useState([]);
     const [users, setusers] = useState({ account: ['uop.supervisor.1@gmail.com','fayrevof@gmail.com'] });
     const [csvfiles, setCsvFiles] = useState({ csv: [] });
 
-
+    //email επιβλέποντα
     const handleName = (event) => {
-        setName(event.target.value);
+        setEmail(event.target.value);
     };
+    //Όνομα εργαστηρίου
     const handleClassName = (event) => {
         setClassName(event.target.value);
     };
+    //Τιμή checkbox
     const handleCheckBox = (event) => {
         var isTrueSet = (event.target.value === 'true');
         setChecked(!isTrueSet);
@@ -86,7 +88,7 @@ export default function CreateClass() {
 
     const createNewClass = async () => {
         if (className) {
-            // Αρχικοποιούμε ένα FormData object  και του περνάμε το επιλεγμένο templateRepo και τα csv files.
+            // Αρχικοποιούμε ένα FormData object  και του περνάμε τα δεδομένα απο την φόρμα μας.
             const formData = new FormData();
             formData.append(
                 'formData', //key
@@ -108,7 +110,6 @@ export default function CreateClass() {
             });
 
             const data = await res.json();
-            console.log(data)
             router.push('/class/' + className)
 
         }
@@ -121,9 +122,9 @@ export default function CreateClass() {
     };
     const addUser = (event) => {
         setusers(prevState => ({
-            account: [...prevState.account, name]
+            account: [...prevState.account, email]
         }))
-        setName('')
+        setEmail('')
     };
 
     const handleCsvFileChange = (event) => {
@@ -132,11 +133,6 @@ export default function CreateClass() {
     };
     return (
         <>
-            <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                <Typography variant="h4" style={{ marginTop: '2%', color: 'white' }} >
-                    Δημιουργία  μαθήματος
-                </Typography>
-            </div>
             <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '6%', marginBottom: '2%', padding: '3%' }}>
                 <Card style={{ width: '100%', marginLeft: '2%' }}>
                     <TableContainer component={Paper}>
@@ -154,7 +150,7 @@ export default function CreateClass() {
 
                                 <StyledTableRow >
                                     <StyledTableCell component="th" scope="row">
-                                        <h4>Όνομα μαθήματος</h4>
+                                        <h4>Όνομα Εργαστηρίου</h4>
                                     </StyledTableCell>
                                     <StyledTableCell>
                                     </StyledTableCell>
@@ -168,7 +164,7 @@ export default function CreateClass() {
                                         <h4 style={{ fontWeight: 'bold' }}>Προσθέστε συνεπιβλέποντες εργαστηρίου</h4>
                                     </StyledTableCell>
                                     <StyledTableCell align="left" component="th" scope="row">
-                                        <TextField style={{ width: '60%' }} value={name} label="Όνομα επιβλέποντα" variant="outlined" type="text" onChange={handleName} />
+                                        <TextField style={{ width: '60%' }} value={email} label="Email επιβλέποντα" variant="outlined" type="text" onChange={handleName} />
                                         <IconButton onClick={addUser} style={{ marginLeft: '2%' }} > <AddCircleIcon fontSize="large" color="primary" /></IconButton>
 
                                     </StyledTableCell>
@@ -177,6 +173,7 @@ export default function CreateClass() {
                                         {users.account.length > 0 ? <Card >
                                             <CardHeader titleTypographyProps={{ variant: 'h6', fontWeight: 'bold', fontSize: '15px', align: "left", margin: '0' }} title="Συν-επιβλέποντες" />
                                             <List dense={true}>
+                                                {/*Κάνουμε iterate στους προς εισαγωγή επιβλέποντες και δημιουργούμε μια λίστα που την γεμίζουμε με τα στοιχεία τους*/}
                                                 {users.account.map((user) => {
                                                     return (
                                                         <>
@@ -203,7 +200,7 @@ export default function CreateClass() {
 
                                             </List>
 
-                                        </Card> : <Card style={{ width: '100px', height: '100px' }}><div></div> </Card>}
+                                        </Card> : ''}
 
 
                                     </StyledTableCell>

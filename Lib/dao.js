@@ -72,7 +72,7 @@ export async function checkClass(user, orgName) {
 
 }
 export async function getActiveOrganizations() {
-
+    // Παίρνουμε  όλους τους οργανισμούς μέσω του github cli
     const { error, stdout, stderr } = await util.promisify(exec)(" gh api  /user/memberships/orgs  --jq '.[].organization.login'");
     if (error) {
         console.log(`error: ${error.message}`);
@@ -83,6 +83,7 @@ export async function getActiveOrganizations() {
         console.log(`stderr: ${stderr}`);
         return;
     }
+    // Δημιουργούμε έναν πίνακα από το string στο sdout με όλους τους οργανισμούς
     const orgs = stdout.split('\n');
     orgs.pop()
     const activeOrgs = []
@@ -90,22 +91,22 @@ export async function getActiveOrganizations() {
     let rows = [];
 
 
-
+    // Φέρνουμε τους active οργανισμούς από την βάση κάνοντας φιλτράρισμα με το github ID
     for (let org of orgs) {
         client = await pool.connect();
         let result = await client.query(
             `
-            select * from organizations  where githubname=$1 and active is true 
+            select * from organizations  where name=$1 and active is true 
             `,
             [org]
         );
 
         rows = result.rows;
-        console.log(org)
-        console.log(rows)
+        
         if (rows.length > 0) {
             activeOrgs.push(rows[0].githubname)
         }
+        console.log(activeOrgs)
     }
 
     return activeOrgs;
@@ -117,18 +118,18 @@ export async function createOrganizations(org, supervisors, checked, files) {
    let client;
     let rows = [];
     client = await pool.connect();
-
-    const myOrgs = await client.query(
+    const nonActiveMyOrgs = await client.query(
         `
             Select * from organizations where active = false
             `, [])
 
+            //Μετανομάζουμε το πρώτο μη ενεργό organization στον όνομα που δώθηκε από τον χρήστη και το θέτουμε ως active
     await client.query(
         `
             UPDATE organizations SET githubname=$1 , active= true  WHERE name = $2 
-            `, [org, myOrgs.rows[0].name])
-
-    var { error, stdout, stderr } = await util.promisify(exec)(` gh api   --method PATCH   -H "Accept: application/vnd.github.v3+json"   /orgs/${myOrgs.rows[0].name}   -f name='${org}'`);
+            `, [org, nonActiveMyOrgs.rows[0].name])
+        //Μέσω github cli κάνουμε μετονομασία του public name του οργανισμού.
+    var { error, stdout, stderr } = await util.promisify(exec)(` gh api   --method PATCH   -H "Accept: application/vnd.github.v3+json"   /orgs/${nonActiveMyOrgs.rows[0].name}   -f name='${org}'`);
 
     if (error) {
         console.log(`error: ${error.message}`);
@@ -141,22 +142,24 @@ export async function createOrganizations(org, supervisors, checked, files) {
     }
 
     for (let supervisor of supervisors) {
-        enterOrganization(myOrgs.rows[0].name, supervisor);
+        //Στέλνουμε invitation στους supervisors
+        signupInOrganization(nonActiveMyOrgs.rows[0].name, supervisor);
     }
 
     var records;
     var content
     if (files) {
         if (files.file) {
-            //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
+                // Σώζουμε το αρχείο csv στο /tmp χρησιμοποιώντας την fs.rename() 
             await util.promisify(fs.rename)(files.file.filepath, '/tmp' + '/' + files.file.originalFilename);
             content = await util.promisify(fs.readFile)("/tmp/" + files.file.originalFilename);
             records = await util.promisify(parse)(content);
             records.shift()
+            //Αν δεν έχει επιλεγεί η αυτόματη ανάθεση φοιτητών, δεν δημιουργούμε τις ομάδες.
             if (checked) {
- 
+                //Υπολογίζουμε πόσοι φοιτητές πρέπει να ανατεθούν σε κάθε supervisor
                 var chunksize = Math.ceil(records.length / supervisors.length);
- 
+                //Χρησιμοποιώντας την _.chunk  της loadash χωρίζουμε τον έναν πίνακα σε πολλούς όπου ο κάθε ένας πίνακας έχει length ίδιο με το chunksize
                 const chunked = _.chunk(records, chunksize)
   
                 for (let i = 0; i < chunked.length; i++) {
@@ -166,8 +169,8 @@ export async function createOrganizations(org, supervisors, checked, files) {
                             `,
                         [supervisors[i]]
                     );
-
-                    var { error, stdout, stderr } = await util.promisify(exec)(`gh api --method POST -H "Accept: application/vnd.github.v3+json" /orgs/${myOrgs.rows[0].name}/teams -f name='${org}-team-${i}'  -f description='Team ${i} for lesson ${org}'  -f permission='push' -f privacy='closed'`);
+                        // Δημιουργούμε νέα ομάδα στο github μέσω του github cli
+                    var { error, stdout, stderr } = await util.promisify(exec)(`gh api --method POST -H "Accept: application/vnd.github.v3+json" /orgs/${nonActiveMyOrgs.rows[0].name}/teams -f name='${org}-team-${i}'  -f description='Team ${i} for lesson ${org}'  -f permission='push' -f privacy='closed'`);
                     if (error) {
                         console.log(`error: ${error.message}`);
                         return false;
@@ -177,6 +180,8 @@ export async function createOrganizations(org, supervisors, checked, files) {
                         console.log(`stderr: ${stderr}`);
                         return false;
                     }
+
+
                     await client.query(
                         `
                             INSERT INTO team( team_name ,team_supervisor, lesson ) VALUES ( $1,$2,$3)
@@ -184,7 +189,8 @@ export async function createOrganizations(org, supervisors, checked, files) {
                         [`${org}-team-${i}`, supervisorsDb.rows[0].githubname, org]
 
                     );
-                    var { error, stdout, stderr } = await util.promisify(exec)(` gh api  -H "Accept: application/vnd.github.v3+json"  /orgs/${myOrgs.rows[0].name}/teams/${org}-team-${i} --jq '.id' `);
+                    //Παίρνουμε το GITHUB ID της ομάδας που μόλις δημιουργήσαμε
+                    var { error, stdout, stderr } = await util.promisify(exec)(` gh api  -H "Accept: application/vnd.github.v3+json"  /orgs/${nonActiveMyOrgs.rows[0].name}/teams/${org}-team-${i} --jq '.id' `);
                     if (error) {
                         console.log(`error: ${error.message}`);
                         return false;
@@ -194,11 +200,12 @@ export async function createOrganizations(org, supervisors, checked, files) {
                         console.log(`stderr: ${stderr}`);
                         return false;
                     }
-
-                    const team = stdout.split('\n');
-                    team.pop()
+                    //Περνάμε το id από το stdout σε έναν πίνακα
+                    const teamID = stdout.split('\n');
+                    teamID.pop()
 
                     for (let j = 0; j < chunked[i].length; j++) {
+                        //Βάζουμε τα στοιχεία των φοιτητών στην βάση
                         await client.query(
                             `
                                 INSERT INTO team_member(team_name, member_github_name,active) VALUES ( $1,$2,$3)
@@ -206,16 +213,17 @@ export async function createOrganizations(org, supervisors, checked, files) {
                             [`${org}-team-${i}`, chunked[i][j][3], false]
 
                         );
+                        //Δημιουργούμε ένα request ώστε να κάνουμε invite στον organization τους φοιτητές μέσω του Github API .
                         const octokit = new Octokit({
                             auth: process.env.pat
                         })
 
                         await octokit.request('POST /orgs/{org}/invitations', {
-                            org: myOrgs.rows[0].name,
+                            org: nonActiveMyOrgs.rows[0].name,
                             email: chunked[i][j][4],
                             role: 'direct_member',
                             team_ids: [
-                                parseInt(team[0])
+                                parseInt(teamID[0])
                             ]
                         })
 
@@ -246,8 +254,9 @@ export async function createOrganizations(org, supervisors, checked, files) {
     return true;
 }
 
-export async function enterOrganization(name, email) {
-    let client;
+export async function signupInOrganization(name, email) {
+    
+    /*let client;
     let rows = [];
     client = await pool.connect();
     let result = await client.query(
@@ -259,8 +268,8 @@ export async function enterOrganization(name, email) {
 
     rows = result.rows;
 
-
-
+*/
+        // Χρησιμοποιούμε το cli για να δημιουργήσουμε ένα invitation για τον χρήστη
     const { error, stdout, stderr } = await util.promisify(exec)(` gh api   --method POST  -H "Accept: application/vnd.github.v3+json" /orgs/${name}/invitations -f email=${email} -f role=admin `);
     if (error) {
         console.log(`error: ${error.message}`);
