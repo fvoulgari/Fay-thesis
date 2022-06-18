@@ -1,41 +1,28 @@
-import formidable from "formidable";
 import _ from 'lodash';
 import { createOrganizations } from "../../Lib/dao";
 
 
 // Δηλώνουμε το συγκεκριμένο config για να μπορέσουμε να διαβάσει το api τα αρχεία
-export const config = {
-    api: {
-        bodyParser: false
-    }
-};
+
 export default async function handler(req, res) {
-    return new Promise(resolve => {
-        //  Αρχικοποιούμε ένα formidable object για να κάνουμε parse την φόρμα και να διαχειριστούμε τα αρχεία.
-        const form = new formidable.IncomingForm({ keepExtensions: true, multiples: true });
-        form.parse(req, async function (err, fields, files) {
-            const obj = JSON.parse(fields.formData)
-            if (_.isEmpty(files) === false) {
-                //Αν υπάρχει csv στην φόρμα κάλούμε την createOrganizations με παράμετρο το csv αλλιώς την καλούμε χωρίς το csv
-                await createOrganizations(obj.className, obj.users, obj.checked, files);
-                res.json({
-                    success: true,
-                    data: true
-                });
+    return new Promise(async (resolve) => {
+        try {
+            await createOrganizations(req.body.organization,req.body.organizationName[0].name,req.body.supervisor, req.body.coSupervisors, req.body.year);
+            res.json({
+                success: true,
+            });
 
-                return resolve()
+            return resolve()
 
 
-            } else {
-                await createOrganizations(obj.className, obj.users, obj.checked);
-                res.json({
-                    success: true,
-                    data: true
-                });
-                return resolve()
-            }
+        } catch (error) {
+            console.log(error)
+            res.json({
+                success: false,
+            });
+            return resolve()
+        }
 
-        });
+    });
 
-    })
 }

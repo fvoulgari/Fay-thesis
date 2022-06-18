@@ -19,6 +19,7 @@ export default function AppFooter() {
           width: '100%',
           position: "relative",
           height: '13vh',
+          minHeight: 100
           }} >
         <Grid
           container

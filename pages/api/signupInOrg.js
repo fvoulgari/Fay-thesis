@@ -1,14 +1,32 @@
 import _ from 'lodash';
-import { signupInOrganization} from "../../Lib/dao";
+import { signupInOrganization } from "../../Lib/dao";
 
 
-// Δηλώνουμε το συγκεκριμένο config για να μπορέσουμε να διαβάσει το api τα αρχεία
 export default async function handler(req, res) {
+    return new Promise(async (resolve) => {
 
-    //  Αρχικοποιούμε ένα formidable object για να κάνουμε parse την φόρμα και να διαχειριστούμε τα αρχεία.
-        await signupInOrganization(req.body.name, req.body.email );
-        res.json({
-            success: true,
-            data: true
-        });
+        try {
+            
+            const result = await signupInOrganization(req.body.name, req.body.email,req.body.githubname, req.body.secret);
+            if (result) {
+                res.json({
+                    success: true,
+                });
+                return resolve
+
+            } else {
+                res.json({ success: false })
+                return resolve
+            }
+
+        } catch (error) {
+            console.log(error);
+            res.json({ success: false })
+            return resolve
+
+        }
+        //  Αρχικοποιούμε ένα formidable object για να κάνουμε parse την φόρμα και να διαχειριστούμε τα αρχεία.
+
+    
+})
 }

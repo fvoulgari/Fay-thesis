@@ -108,10 +108,7 @@ export default function Test({ repos }) {
 
 
   useEffect(() => {
-    console.log(files)
-    console.log(repo)
-    console.log(testfiles)
-    console.log(csvfiles)
+    
 
   }, [files, testfiles, repo, csvfiles]);
 
@@ -119,7 +116,7 @@ export default function Test({ repos }) {
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-        <Typography variant="h4" style={{ marginTop: '7%', color: 'white' }} >
+        <Typography variant="h4" style={{ marginTop: '7%'}} >
           Δημιουργία & αρχικοποίηση αποθετηρίων
         </Typography>
       </div>

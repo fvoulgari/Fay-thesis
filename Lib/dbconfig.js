@@ -1,5 +1,5 @@
-const { Pool } = require('pg');
-// TODO #1 make dev and prod envs for connecting to DB
+import { Pool }  from 'pg';
+
 const pool = new Pool({
 	user: process.env.DB_USER,
 	host: process.env.DB_HOST,

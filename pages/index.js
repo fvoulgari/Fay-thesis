@@ -1,43 +1,46 @@
 import React, {
-  useState, useEffect, useContext, useMemo,
+  useState, useEffect, useContext, useMemo
 } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import {
-  Button,
-  TextField,
-  Container,
-  Typography,
-  Card,
-  Box,
-} from '@mui/material';
+import {Button, TextField, Container, Typography, Card, Box} from '@mui/material';
 import showNotification from '../Lib/notification'
+import { getAppCookies } from '../Lib/dao'
+import {MyContext } from './_app'
+
 
 export default function Home() {
   const router = useRouter();
+  const context= useContext(MyContext)
+  const supervisor = context.supervisor;
+  const setSupervisor= context.setSupervisor
   const [email, setEmail] = useState([]);
   const [password, setPassword] = useState([]);
-  const signIn = async () => {
+  const signIn = async (e) => {
+    e.preventDefault();
     try {
       if (email && password) {
         const bodyData = {
           email: email,
           password: password
         }
-        const res = await fetch('/api/auth/signin', {
+        const res = await fetch('/api/auth/login', {
           method: 'POST',
+          body: JSON.stringify(bodyData),
           headers: {
             Accept: 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(bodyData),
+            'Content-Type': 'application/json'
+          }
         });
-
-        const data = await res.json();
-
-        if (res.status === 200 && data.success && data.token) {
-          console.log('here');
-          await router.push('user/dashboard');
+        const data = await res.json()
+        if (res.status === 200 && data.success) {
+          setSupervisor(true)
+          showNotification(
+            'success',
+            'Επιτυχής πρόσβαση',
+            'Επιτυχής σύνδεση. Καλώς ήρθατε στο σύστημα.'
+          );
+          await router.push('/classhome');
 
         }
         else {
@@ -46,6 +49,8 @@ export default function Home() {
             'Σφάλμα πρόσβασης',
             'Μη αποδεκτά συνθηματικά. Παρακαλούμε επαναλάβετε.'
           );
+
+
         }
       }
     }
@@ -69,16 +74,16 @@ export default function Home() {
 
   return (
     <>
-    <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-        <Typography variant="h4" style={{ marginTop: '3%', color:'white' }} >
-        Συνδεθείτε στο σύστημα
+      <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
+        <Typography variant="h4" style={{ marginTop: '3%' }} >
+          Σύνδεση
         </Typography>
-    </div>
-      <Container maxWidth="md" style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', padding: '4%'  }}>
+      </div>
+      <Container maxWidth="md" style={{ display: 'flex', justifyContent: 'center', height: '80%', marginBottom: '5%', padding: '4%' }}>
         <Card style={{ maxWidth: 700, minWidth: 400 }}>
           <div style={{ padding: '5%' }}>
-            
-            <form method="POST" action="javascript:void(0);" >
+
+            <form method="POST" onSubmit={signIn} >
               <Box style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: '5%' }}>
                 <TextField size="small" label="Email" variant="outlined" type="email" onChange={handleEmail} />
               </Box>
@@ -87,7 +92,7 @@ export default function Home() {
               </Box>
 
               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '5%' }}>
-                <Button type="submit" variant="contained"  onClick={signIn} >
+                <Button type="submit" variant="contained"   >
                   Συνδεση
                 </Button>
               </div>
@@ -108,7 +113,15 @@ export default function Home() {
 
 
 export async function getServerSideProps(context) {
-  const KEY = process.env.JWT_KEY;
+  let cookies = await getAppCookies(context.req);
+  if (cookies.sucess) {
+      return {
+          redirect: {
+              destination: '/classhome',
+              permanent: false,
+          },
+      }
+  }
   return {
     props: {},
   }

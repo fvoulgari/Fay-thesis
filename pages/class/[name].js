@@ -1,188 +1,368 @@
 import React, {
-    useState, 
+    useState, useEffect, createContext
 } from 'react';
 import { useRouter } from 'next/router';
 import _ from 'lodash';
-import PermanentDrawerLeft from '../../src/components/PermanentDrawerLeft';
-import CircularProgressWithLabel from '../../src/components/CircularProgressWithLabel';
-// import { getActiveOrganizations } from '../Lib/dao';
+import EditExercise from '../../src/components/editExercise'
+import CreateExercise from '../../src/components/createExercise';
+import CreateTeam from '../../src/components/createTeam';
+import EditTeam from '../../src/components/editTeam';
+import EditLab from '../../src/components/editLab';
 import {
-    Container,
-    Typography,
-    Card,
-    Table,
-    TableBody,
-    TableCell,
-    tableCellClasses,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper
+    Container, Breadcrumbs, emphasize, Typography, TableCell, tableCellClasses, Chip
 } from '@mui/material';
-import {  getTeams } from '../../Lib/dao';
+import Box from '@mui/material/Box';
+import Drawer from '@mui/material/Drawer';
+import Toolbar from '@mui/material/Toolbar';
+import List from '@mui/material/List';
+import Divider from '@mui/material/Divider';
+import ListItem from '@mui/material/ListItem';
+import Stats from '../../src/components/stats';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import EditIcon from '@mui/icons-material/Edit';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import HomeIcon from '@mui/icons-material/Home';
+import InsightsIcon from '@mui/icons-material/Insights';
+import { getTeams, getAppCookies, checkClass, getRepos, getGithubInfo, getCoSupervisors, getExerciseInfo, getTotals } from '../../Lib/dao';
 import { styled } from '@mui/material/styles';
+import HomeClass from '../../src/components/home';
+import { Button } from 'antd';
+
+//TODO 1 κουμπί για εναλλαγή προβαλόμενων στατιστικών
+
+//Δημιουργούμε context έτσι ώστε να μπορούμε να μοιραστούμε state, μεταβλητές και συναρτήσεις με imported components
+export const contextOptions = createContext();
 
 
+const drawerWidth = 240;
 
+const StyledBreadcrumb = styled(Chip)(({ theme }) => {
+    const backgroundColor =
+        theme.palette.mode === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[800];
+    return {
+        backgroundColor,
+        height: theme.spacing(3),
+        color: theme.palette.text.primary,
+        fontWeight: theme.typography.fontWeightRegular,
+        '&:hover, &:focus': {
+            backgroundColor: emphasize(backgroundColor, 0.06),
+        },
+        '&:active': {
+            boxShadow: theme.shadows[1],
+            backgroundColor: emphasize(backgroundColor, 0.12),
+        },
+    };
+})
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-    [`&.${tableCellClasses.head}`]: {
-        backgroundColor: theme.palette.common.black,
-        color: theme.palette.common.white,
-    },
-    [`&.${tableCellClasses.body}`]: {
-        fontSize: 14,
-    },
-}));
-
-
-
-export default function Class({ name, teams, labProgress }) {
+export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, githubInfo, supervisor, coSupervisors }) {
     const router = useRouter();
+    const [containerContent, setContainerContent] = useState('home') // Αρχική προβολή σελίδα με στατιστικά
+    const [expanded, setExpanded] = React.useState(false);
+    const [templateRepo, setTemplateRepo] = useState(null);
+    const [exercises, setExercises] = useState(repos);
+    const [orgnizationSupervisors, setOrgnizationSupervisors] = useState(coSupervisors)
+    const [selectStats, setSelectStats] = useState('Tests');
+    const [teams, setTeams] = useState(teamsProps)
+    const [repo, setRepo] = useState([]);
+    const [files, setFiles] = useState([{ files: [] }]);
+    const [testfiles, setTestFiles] = useState({ testfiles: [] });
+    const [csvfiles, setCsvFiles] = useState({ csv: [] });
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [exercisesDB, setExercisesDB] = useState(null);
+    const [max, setMax] = useState(0);
 
 
 
-    const labs = [
-        { name: 'Άσκηση 1' },
-        { name: 'Άσκηση 2' },
-        { name: 'Άσκηση 3' },
-        { name: 'Άσκηση 4' },
-        { name: 'Άσκηση 5' },
-    ]
+//Φέρνουμε τα στατιστικά απο τις ασκήσεις
+    const getStats = async ()=>{
+        const res = await fetch('/api/getStats',  {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                organization: name,
+            })
+        })
 
-
-    const tempTeams = [
-        {
-            team: 'Ομάδα 1', supervisor: 'Υπεύθυνος 1', labs: [
-                { progress: labProgress[0], name: 'Άσκηση 1' },
-                { progress: labProgress[1], name: 'Άσκηση 2' },
-                { progress: labProgress[2], name: 'Άσκηση 3' },
-                { progress: labProgress[3], name: 'Άσκηση 4' },
-                { progress: labProgress[4], name: 'Άσκηση 5' },
-            ]
-        },
-        {
-            team: 'Ομάδα 2', supervisor: 'Υπεύθυνος 2', labs: [
-                { progress: labProgress[5], name: 'Άσκηση 1' },
-                { progress: labProgress[6], name: 'Άσκηση 2' },
-                { progress: labProgress[7], name: 'Άσκηση 3' },
-                { progress: labProgress[8], name: 'Άσκηση 4' },
-                { progress: labProgress[9], name: 'Άσκηση 5' },
-            ]
-        },
-        {
-            team: 'Ομάδα 3', supervisor: 'Υπεύθυνος 3', labs: [
-                { progress: labProgress[10], name: 'Άσκηση 1' },
-                { progress: labProgress[11], name: 'Άσκηση 2' },
-                { progress: labProgress[12], name: 'Άσκηση 3' },
-                { progress: labProgress[13], name: 'Άσκηση 4' },
-                { progress: labProgress[14], name: 'Άσκηση 5' }
-            ]
-        },
-        {
-            team: 'Ομάδα 4', supervisor: 'Υπεύθυνος 4', labs: [
-                { progress: labProgress[15], name: 'Άσκηση 1' },
-                { progress: labProgress[16], name: 'Άσκηση 2' },
-                { progress: labProgress[17], name: 'Άσκηση 3' },
-                { progress: labProgress[18], name: 'Άσκηση 4' },
-                { progress: labProgress[19], name: 'Άσκηση 5' },
-            ]
-        },
-        {
-            team: 'Ομάδα 5', supervisor: 'Υπεύθυνος 5', labs: [
-                { progress: labProgress[20], name: 'Άσκηση 1' },
-                { progress: labProgress[21], name: 'Άσκηση 2' },
-                { progress: labProgress[22], name: 'Άσκηση 3' },
-                { progress: labProgress[23], name: 'Άσκηση 4' },
-                { progress: labProgress[24], name: 'Άσκηση 5' },
-            ]
+        const data = await res.json();
+        
+        if(data.success){
+            setExercisesDB(data.exercises)
+            setMax(data.max)
         }
-    ]
-    //Ανάλογα με την τιμή του porgress γυνάμε το κατάλληλο color
-    function getColor(progress) {
-        if (progress < 35) return 'error'
-        if (progress >= 35 && progress < 70) return 'warning'
-        return 'success'
+        setIsLoading(false)
     }
-    //Με το εργαστήριο, την ομάδα και την άσκηση κάνουμε redirect σε μια συγκεκριμένη άσκηση
-    function handleCellClick(orgName,team,lab){
-        router.push({ pathname: `/class/${orgName}/${lab}`, query: { team: team } });
 
+    useEffect(()=>{
+        try{
+            getStats()
+
+        }catch(error){
+            console.log(error)
+        }
+    },[])
+
+
+    const handleChange = (panel) => (event, isExpanded) => {
+        setExpanded(isExpanded ? panel : false);
+    };
+
+
+    const handleChangeStats = (event) => {
+        setSelectStats(event.target.value);
+    };
+
+
+
+    const handleHome =  async (event) => {
+        setContainerContent('home')
     }
+    const handleCreateTeam = async (event) => {
+        setContainerContent('createTeam')
+    }
+    const handleEditExercise = async (event) => {
+        setContainerContent('editExercise')
+    }
+    const handleClick = async (event) => {
+        setContainerContent('createExercise')
+    }
+    const handleClickStats = async (event) => {
+        setContainerContent('stats')
+    }
+    const handleEditTeam = async (event) => {
+        setContainerContent('editTeam')
+    }
+    const handleEditLab = async (event) => {
+        setContainerContent('editLab')
+    }
+
+
+
+   
+ 
 
 
     return (
         <>
+            {/*Δηλώνουμε ποιες μεταβλητές και συναρτήσεις να δηλωθούν ως context ώστε να μπορούν να γίνουν imported στα components */}
+            <contextOptions.Provider
+                value={{
+                    templateRepoContext: { templateRepo, setTemplateRepo },
+                    repoContext: { repo, setRepo },
+                    filesContext: { files, setFiles },
+                    testfilesContext: { testfiles, setTestFiles },
+                    csvfilesContext: { csvfiles, setCsvFiles },
+                    organization: name,
+                    supervisor: supervisor,
+                    github: githubInfo,
+                    exercises,
+                    exerciseInfo,
+                    setExercises,
+                    max,
+                    isLoading,
+                    setSelectStats: setSelectStats,
+                    type: selectStats,
+                    setType: setSelectStats,
+                    exercisesDB,
+                    teams: teams,
+                    totals,
+                    setTeams: setTeams,
+                    orgnizationSupervisors: orgnizationSupervisors,
+                    setOrgnizationSupervisors: setOrgnizationSupervisors
+                }}
+            >
+                <div style={{ marginTop: '2%', marginLeft: '4%', marginBottom: '1%' }} role="presentation">
+                    <Breadcrumbs aria-label="breadcrumb">
+                        <StyledBreadcrumb
+                            component="a"
+                            label="Classhome"
+                            onClick={() => { router.push('/classhome') }}
+                            icon={<HomeIcon fontSize="small" />}
+                        />
+                        <StyledBreadcrumb
+                            label={name}
+                            deleteIcon={<ExpandMoreIcon />}
 
-            <div style={{ margin: '4%', display: 'flex', justifyContent: 'center', backgroundColor: "white" }}>
-                <PermanentDrawerLeft name={name} />
-                <Container maxWidth="xl" style={{ paddingTop: '3%', marginBottom: '2%', padding: '3%' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%' }}>
-                        <Typography variant="h4" style={{ marginBottom: '2%', color: 'Black' }} >
-                            Πληροφορίες Εργαστηρίου
-                        </Typography>
-                    </div>
-                    <Card style={{ minWidth: '450px', marginLeft: '2%' }}>
+                        />
+                    </Breadcrumbs>
+                </div>
+                <div style={{ marginBottom: '4%' , marginLeft: '4%', marginRight: '4%', display: 'flex', justifyContent: 'center', backgroundColor: "white" }}>
 
-                        <TableContainer component={Paper}>
-                            <Table sx={{ minWidth: '70vw' }} aria-label="caption table">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>
-                                        </TableCell>
-                                        {labs.map((column) => (
-                                            <TableCell
-                                                key={column.name}
+                    <Box sx={{ display: 'flex' }}>
 
-                                            >
-                                                <p style={{ fontWeight: 'bold', fontSize: '17px' }}>{column.name}</p>
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {tempTeams.map((row) => (
-                                        <TableRow key={row.team}>
-                                            <StyledTableCell scope="row">
-                                                <p style={{ fontWeight: 'bold', fontSize: '17px', marginBottom: '5%' }}>{row.team}</p>
-                                                <p style={{ color:`${row.supervisor=='Υπεύθυνος 1'? 'blue': 'black'}`}}>{row.supervisor=='Υπεύθυνος 1'?'H ομάδα μου':row.supervisor}</p>
-                                            </StyledTableCell>
-                                            {row.labs.map((column, index) => {
-                                                //Μέσα στο CingularProgess περνάμε το thicknessν, το χρώμα που θέλουμε με την getColor, το size και το progress 
-                                                return (
-                                                    <TableCell
-                                                        key={`${column.progress}-${index}`}
-                                                        //Όταν κάνουμε click σε ένα από τα cell καλούμε την HandleCellClick με παραμέτρους τον οργανισμό, την ομάδα, και την άσκηση
-                                                        onClick={()=>{handleCellClick(name,row.team, column.name)}}
-                                                        style={{ cursor: 'pointer'}}
-                                                    >
-                                                        <CircularProgressWithLabel thickness={5} color={getColor(column.progress)}
-                                                            size="5em" value={column.progress} />
-                                                    </TableCell>
-                                                )
-                                            })}
+                        <Drawer
+                            sx={{
+                                width: drawerWidth,
+                                '& .MuiDrawer-paper': {
+                                    width: drawerWidth,
+                                    boxSizing: 'border-box',
+                                    position: "relative"
+                                },
+                            }}
+                            variant="permanent"
+                            anchor="left"
+                        >
+                            <Toolbar ><Button onClick={handleHome} style={{ width: '100%',borderRadius: 20, display: 'flex', justifyContent: 'center', fontWeight: 'bold', fontSize: '15px' }}>Home</Button>  </Toolbar>
+
+                            <Divider />
+                            <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel1bh-content"
+                                    id="panel1bh-header"
+                                >
+                                    <Typography sx={{ width: '33%', flexShrink: 0, fontWeight: 'bold' }}>
+                                        Εργαστήριο
+                                    </Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <List sx={{ padding: '0', margin: 0 }}>
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleClickStats}>
+                                                <ListItemIcon>
+                                                    <InsightsIcon />
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Ασκήσεις'} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleEditLab}>
+                                                <ListItemIcon>
+                                                    <EditIcon />
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Επεξεργασία'} />
+                                            </ListItemButton>
+                                        </ListItem>
+
+                                    </List>
+                                </AccordionDetails>
+                            </Accordion>
+                            <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel1bh-content"
+                                    id="panel1bh-header"
+                                >
+                                    <Typography sx={{ width: '33%', flexShrink: 0, fontWeight: 'bold' }}>
+                                        Ασκήσεις
+                                    </Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <List sx={{ padding: '0', margin: 0 }}>
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleEditExercise}>
+                                                <ListItemIcon>
+                                                    {<EditIcon />}
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Επεξεργασία '} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                        <Divider />
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleClick}>
+                                                <ListItemIcon>
+                                                    {<AddBoxIcon />}
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Δημιουργία'} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                        <Divider />
+
+                                    </List>
+                                </AccordionDetails>
+                            </Accordion>
+                            <Accordion expanded={expanded === 'panel2'} onChange={handleChange('panel2')}>
+                                <AccordionSummary
+                                    expandIcon={<ExpandMoreIcon />}
+                                    aria-controls="panel1bh-content"
+                                    id="panel1bh-header"
+                                >
+                                    <Typography sx={{ width: '33%', flexShrink: 0, fontWeight: 'bold' }}>
+                                        Ομάδες
+                                    </Typography>
+                                </AccordionSummary>
+                                <AccordionDetails>
+                                    <List sx={{ padding: '0', margin: 0 }}>
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleCreateTeam}>
+                                                <ListItemIcon>
+                                                    {<AddBoxIcon />}
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Δημιουργία '} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                        <Divider />
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleEditTeam} >
+                                                <ListItemIcon>
+                                                    {<EditIcon />}
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Επεξεργασία '} />
+                                            </ListItemButton>
+                                        </ListItem>
+                                        <Divider />
 
 
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </List>
+                                </AccordionDetails>
+                            </Accordion>
+                        </Drawer>
+                    </Box>
 
-                        </TableContainer>
-                    </Card>
-                </Container>
-            </div>
 
+                    <Container maxWidth="xl" style={{ paddingTop: '3%', marginBottom: '2%', padding: '3%', minHeight: '80vh' }}>
+
+                        {/*Καλούμε την CreateExercise και δίνουμε ως prop το classname */}
+
+                        {containerContent == 'createExercise' && <CreateExercise classname={name} />
+                        }
+                        {/*Καλούμε την EditExercise και δίνουμε ως prop τα repos */}
+
+                        {containerContent == 'editExercise' && <EditExercise repos={repos} />}
+
+                        {containerContent == 'createTeam' && <CreateTeam />}
+
+                        {containerContent == 'editTeam' && <EditTeam />}
+
+                        {containerContent == 'editLab' && <EditLab />}
+
+                        {containerContent == 'stats' && <Stats />}
+                        
+                        {containerContent == 'home' && <HomeClass />}
+
+
+                    </Container>
+                </div>
+            </contextOptions.Provider>
         </>
     )
 }
 
 
 export async function getServerSideProps(context) {
-
     const name = context.params.name;
-    /*const valid = checkClass('fvoulgari', name)
-    //Παίρνουμε όλα τα repos μέσω της getRepos(), έπειτα ελέγχουμε ποιά από αυτά είναι template και τα δίνουμε ως prop στο component  
+    //Ελέγχουμε αν είναι συνδεδεμένος ο χρήστης και γυρνάμε τα στοιχεία του.
+    let cookies = await getAppCookies(context.req);
+    if (!cookies.sucess) {
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false,
+            },
+        }
+    }
+    //Ελέγχουμε αν ο χρήστης έχει πρόσβαση στο μάθημα
+    const valid = await checkClass(cookies.supervisor.githubname, name)
     if (!valid) {
         return {
             redirect: {
@@ -191,9 +371,7 @@ export async function getServerSideProps(context) {
             },
         };
     }
-*/
     const teamRows = await getTeams(name)
-    console.log(teamRows, name)
     const teams = teamRows.map((team) => {
         return {
 
@@ -202,17 +380,29 @@ export async function getServerSideProps(context) {
 
         }
     })
-    const labProgress = [
-        31, 10, 99, 27, 18, 22, 56, 94,
-        38, 100, 10, 37, 4, 49, 75, 25,
-        22, 36, 91, 87, 100, 70, 45, 88,
-        55
-    ]
+    const template = await getRepos(name);
+    const repos = [];
+    const githubInfo = await getGithubInfo(name)
+    const exerciseInfo = await getExerciseInfo(name)
+    const totals = await getTotals(name)
+
+    const coSupervisors = await getCoSupervisors(name);
+
+    for (let temp of template) {
+        if (temp.isTemplate) repos.push(temp.name)
+    }
+
     return {
         props: {
             name: name,
-            teams: teams,
-            labProgress
+            teamsProps: teams,
+            repos,
+            exerciseInfo,
+            totals,
+            githubInfo: githubInfo,
+            supervisor: cookies.supervisor,
+            coSupervisors: coSupervisors
+
         }
     }
 }
