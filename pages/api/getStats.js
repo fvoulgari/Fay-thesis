@@ -10,10 +10,9 @@ export default async function handler(req, res) {
         try {
 
             const exercises = await getExercises(req.body.organization);
-            console.log('getExercises')
             const exercisesDB = _.chain(exercises)
                 // Group the elements of Array based on `color` property
-                .groupBy("team")
+                .groupBy("teamname")
                 // `key` is group's name (color), `value` is the array of objects
                 .map((value, key) => ({ team: key, supervisor: value[0].supervisor, length: value.length, exercises: _.chain(value).sortBy("initialized").value() }))
                 .value()

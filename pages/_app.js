@@ -31,7 +31,6 @@ function MyApp(props) {
             },
           });
           const data = await resp.json()
-          console.log(data)
           if (data.sucess) {
             setSupervisor(data.supervisor)
           }
@@ -43,7 +42,6 @@ function MyApp(props) {
         setBool(false)
         fetchName();
         setBool(true)
-        console.log('fetct')
 
       }
     } catch (err) {

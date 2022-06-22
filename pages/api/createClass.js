@@ -7,7 +7,7 @@ import { createOrganizations } from "../../Lib/dao";
 export default async function handler(req, res) {
     return new Promise(async (resolve) => {
         try {
-            await createOrganizations(req.body.organization,req.body.organizationName[0].name,req.body.supervisor, req.body.coSupervisors, req.body.year);
+            await createOrganizations(req.body.organization,req.body.organizationName[0].name,req.body.supervisor, req.body.coSupervisors, req.body.year,req.body.secret);
             res.json({
                 success: true,
             });

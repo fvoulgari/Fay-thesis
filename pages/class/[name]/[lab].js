@@ -14,6 +14,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import moment from 'moment';
+import CheckBoxRoundedIcon from '@mui/icons-material/CheckBoxRounded';
+import ReportGmailerrorredRoundedIcon from '@mui/icons-material/ReportGmailerrorredRounded';
 import CircularProgress from '@mui/material/CircularProgress';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import HomeIcon from '@mui/icons-material/Home';
@@ -93,33 +95,41 @@ export default function Class({ name, team, lab, students }) {
        
     //Καλούμε api για να κάνουμε update στα σχόλια και την βαθμολογία του εκάστοτε φοιτητή
 
-    const handleSaveGrade = async (grade, member) => {
-        const res = await fetch('/api/saveGrade', {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                organization: name,
-                exercise: lab,
-                teamMember: member,
-                grade: grade,
-                comment: comment
-            })
-        });
-        const data = await res.json( )
-        if (data.success) {
+    const handleSaveGrade = async (grade, member,index) => {
+        if(typeof grade == 'number'){
+            const res = await fetch('/api/saveGrade', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    organization: name,
+                    exercise: lab,
+                    teamMember: member,
+                    grade: grade,
+                    comment: comment.comments[index]
+                })
+            });
+            const data = await res.json( )
+            if (data.success) {
+                showNotification(
+                    'success',
+                    'Επιτυχής εγγραφή πληροφοριών',
+                );
+            } else {
+                showNotification(
+                    'error',
+                    'Ανεπιτυχής εγγραφή πληροφοριών',
+                );
+            }
+        }else{
             showNotification(
-                'success',
-                'Επιτυχής εγγραφή πληροφοριών',
-            );
-        } else {
-            showNotification(
-                'error',
-                'Ανεπιτυχής εγγραφή πληροφοριών',
+                'warning',
+                'Παρακαλώ συμπληρώστε  βαθμολογία πριν την αποθήκευση ',
             );
         }
+      
 
 
     };
@@ -152,7 +162,7 @@ export default function Class({ name, team, lab, students }) {
     //Καλούμε api για να γίνει export to similarity check
 
     const similarityExport = async () => {
-        fetch('/api/similarityExport', {
+        const data= fetch('/api/similarityExport', {
             method: 'GET'
         }).then(res => {
 			return res.blob();
@@ -163,6 +173,7 @@ export default function Class({ name, team, lab, students }) {
 			a.href = href;
             a.type= "text/plain;charset=utf-8"
 			a.click();
+
 		});
 
     };
@@ -274,25 +285,25 @@ export default function Class({ name, team, lab, students }) {
                                 <TableHead>
                                     <TableRow>
                                         <TableCell align='center'>
-                                            <span style={{ fontWeight: 'bold', }}>  Όνομα</span>
+                                            <span style={{ fontWeight: 'bold' }}>  Όνομα</span>
                                         </TableCell>
                                         <TableCell align='center'>
                                             <span style={{ fontWeight: 'bold' }}>  Commits</span>
                                         </TableCell>
                                         <TableCell align='center'>
-                                            <span style={{ fontWeight: 'bold' }}> Επιτυχή tests</span>
+                                            <span style={{ fontWeight: 'bold' }}>  Τests</span>
                                         </TableCell>
                                         <TableCell align='center'>
                                             <span style={{ fontWeight: 'bold' }}> Ημ/νία τελευταίου commit</span>
                                         </TableCell>
                                         <TableCell align='center'>
-                                            <span style={{ fontWeight: 'bold', }}> Βαθμός άσκησης </span>
+                                            <span style={{ fontWeight: 'bold' }}> Βαθμός άσκησης </span>
                                         </TableCell>
                                         <TableCell align='center'>
-                                            <span style={{ fontWeight: 'bold', }}> Σχόλια</span>
+                                            <span style={{ fontWeight: 'bold' }}> Σχόλια</span>
                                         </TableCell>
                                         <TableCell align='center'>
-                                            <span style={{ fontWeight: 'bold', }}>M.O. ασκήσεων</span>
+                                            <span style={{ fontWeight: 'bold' }}>M.O. ασκήσεων</span>
                                         </TableCell>
                                         <TableCell align='center'>
                                         </TableCell>
@@ -301,8 +312,8 @@ export default function Class({ name, team, lab, students }) {
                                 <TableBody>
                                     {students.map((row, index) => (
                                         <TableRow key={row.team_member_id}>
-                                            <StyledTableCell scope="row" style={{ maxWidth: '150px' }} >
-                                                <List dense={true} style={{ maxWidth: '150px' }}>
+                                            <StyledTableCell scope="row" style={{ maxWidth: '200px' }} >
+                                                <List dense={true} style={{ maxWidth: '200px' }}>
                                                     <ListItem
                                                         secondaryAction={
                                                             <a href={`https://github.com/${row.org}/${row.member_github_name}-${row.name}/`} target="_blank" >
@@ -311,7 +322,7 @@ export default function Class({ name, team, lab, students }) {
                                                         }
                                                     >
                                                         <ListItemText
-                                                            primary={row.first_name + ' ' + row.last_name}
+                                                            primary={row.first_name + ' ' + row.last_name} style={{textAlign: 'center'}}
                                                         />
                                                     </ListItem>
                                                 </List>
@@ -323,8 +334,28 @@ export default function Class({ name, team, lab, students }) {
                                             </TableCell>
                                             <TableCell key={row.commits + row.team_member_id}>
                                                 <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                                <List dense={true} style={{ maxWidth: '200px' }}>
+                                                { Object.keys(row.workflow).map((key)=>{ console.log(row.workflow); console.log([...row.workflow[key].map( (work)=>work.value[0])]); return <>
+                                                    <ListItem
+                                                        secondaryAction={
+                                                            <>
+                                                                {[...row.workflow[key].map( (work)=>work.value[0])].includes('success')? <CheckBoxRoundedIcon color="success" fontSize='medium'/>: <ReportGmailerrorredRoundedIcon color="error" fontSize='medium'/>}
 
-
+                                                            </>
+                                                            
+                                                        
+                                                        }
+                                                    >
+                                                        <ListItemText
+                                                            primary={row.workflow[key][0].value[1]} style={{fontWeight: 'bold'}}
+                                                        />
+                                                    </ListItem>
+                                                
+                                                
+                                                </>}) } 
+                                                   
+                                                </List>
+{/* 
                                                     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
                                                         <CircularProgress
                                                             variant="determinate"
@@ -348,7 +379,7 @@ export default function Class({ name, team, lab, students }) {
                                                                 {handleText(row.workflow)}
                                                             </Typography>
                                                         </Box>
-                                                    </Box>
+                                                    </Box> */}
                                                 </div>
                                             </TableCell>
                                             <TableCell key={row.commitTime}>
@@ -385,7 +416,7 @@ export default function Class({ name, team, lab, students }) {
                                                 <TextField value={comment.comments[index]} label="Σχόλιο" variant="outlined" type="text" onChange={ (event)=>handleComment(event,index)} />
                                             </TableCell>
                                             <TableCell>
-                                                <span style={{ fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center' }}> {row.averageGrade.length > 0 ? _.mean(row.averageGrade.map((grade) => grade.grade).filter((item) => {
+                                                <span style={{ fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', textAlign:'center'}}> {row.averageGrade.length > 0 ? _.mean(row.averageGrade.map((grade) => grade.grade).filter((item) => {
                                                     if (item) return true
                                                     return false
                                                 })) : ''}  {row.averageGrade.length > 0 ? `(${row.averageGrade.map((grade) => grade.grade).filter((item) => {
@@ -397,7 +428,7 @@ export default function Class({ name, team, lab, students }) {
                                                 <Popconfirm
                                                         title={'Είστε σίγουρος ότι θέλετε να αλλάξετε τις πληροφορίες του φοιτητή'}
                                                         onConfirm={() => {
-                                                            handleSaveGrade(grade.students[index], row.member_github_name)
+                                                            handleSaveGrade(grade.students[index], row.member_github_name,index)
                                                         }}
                                                         okText={'Ναι'}
                                                         cancelText={'Οχι'}
@@ -419,7 +450,7 @@ export default function Class({ name, team, lab, students }) {
                             
                             
                             <Button style={{ minWidth: 200 }} onClick={similarityExport} type="submit" variant="contained" color="error" >
-                                Similarity check
+                                ελεγχος ομοιοτητας 
                             </Button>
                         </div>
 
@@ -440,7 +471,6 @@ export async function getServerSideProps(context) {
     const lab = context.query.lab
 
     const students = await getStudentsInfo(name, team, lab)
-
     return {
         props: {
             name: name,

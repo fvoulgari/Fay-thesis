@@ -18,7 +18,7 @@ export default async function signup(req, res) {
 
                 let result = await client.query(
                     `
-                INSERT INTO  users(first_name,last_name,email,pwd,githubname) VALUES($1,$2,$3,$4,$5)
+                INSERT INTO  supervisor(first_name,last_name,email,pwd,githubname) VALUES($1,$2,$3,$4,$5)
                 returning *
           `,
                     [req.body.name, req.body.lastname, req.body.email, hashpass, req.body.github,]

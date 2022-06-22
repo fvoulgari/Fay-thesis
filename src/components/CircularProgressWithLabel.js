@@ -25,10 +25,13 @@ export default function CircularProgressWithLabel(props) {
     const getSuccess = (workflow)=>{
       var succesffulTests = 0;
         for(let tempWorkFlow in  workflow){
-          const check = workflow[tempWorkFlow].filter( (item) => {
+          var check = workflow[tempWorkFlow].filter( (item) => {
               return item.value.includes('success') 
             })
-            if(check.length>0)succesffulTests+=1
+            check=[...new Set(check.map( (val)=>val.value[2]))]
+
+                if (check.length > 0) succesffulTests +=  check.length
+
 
         }
         return succesffulTests
@@ -36,17 +39,18 @@ export default function CircularProgressWithLabel(props) {
    }
     const handleWorkflow = (workflow)=>{
       var succesffulTests = 0;
-      console.log('workflow' , workflow)
-   
+
      // console.log("workflow ",  workflow)
       if (workflow.length==0){
           return 0  
       }else{
         for(let tempWorkFlow in  workflow){
-         const check = workflow[tempWorkFlow].filter( (item) => {
+         var check = workflow[tempWorkFlow].filter( (item) => {
               return item.value.includes('success') 
             })
-            if(check.length>0)succesffulTests+=1
+            check=[...new Set(check.map( (val)=>val.value[2]))]
+
+            if (check.length > 0) succesffulTests +=  check.length
 
         
 

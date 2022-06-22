@@ -93,7 +93,7 @@ export default function AppHeader() {
             >
 
             </Button>
-            {supervisor && <><Button variant='contained' color="warning" stlye={{ minWidth: 150 }} onClick={logout}> Αποσυδεση </Button> </>}
+            {supervisor && <><Button variant='contained' color="warning" stlye={{ minWidth: 150 }} onClick={logout}> Αποσυνδεση </Button> </>}
           </Toolbar>
         </AppBar>
       </div>

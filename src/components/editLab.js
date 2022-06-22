@@ -158,12 +158,12 @@ export default function EditLab() {
                         <TableBody>
                             <TableRow sx={{ height: '200px' }}>
                                 <TableCell component="th" scope="row">
-                                    <h4 style={{ fontWeight: 'bold' }}>Συνεπιβλέποντες εργαστηρίου</h4>
+                                    <h4 style={{ fontWeight: 'bold' }}>Προσθήκη υπευθύνου</h4>
                                 </TableCell>
                                 <TableCell align="left" component="th" scope="row">
-                                    <TextField style={{ width: '60%' }} label="Email επιβλέποντα" variant="outlined" type="text" onChange={handleEmail} />
+                                    <TextField style={{ width: '60%' }} label="Github Email" variant="outlined" type="text" onChange={handleEmail} />
                                     <Popconfirm
-                                        title={`Είστε σίγουρος ότι θέλετε να προσθέσε υπέυθηνο με email:  ${email}`}
+                                        title={`θέλετε να προσθέσετε υπεύθυνο με email:  ${email} ;`}
                                         onConfirm={addCoSupervisors}
                                         okText={'Ναι'}
                                         cancelText={'Οχι'}
@@ -178,7 +178,7 @@ export default function EditLab() {
                                 <TableCell align="right" component="th" scope="row">
 
                                     {stateSupervisor ? <Card >
-                                        <CardHeader titleTypographyProps={{ variant: 'h6', fontWeight: 'bold', fontSize: '15px', align: "left", margin: '0' }} title="Συν-επιβλέποντες" />
+                                        <CardHeader titleTypographyProps={{ variant: 'h6', fontWeight: 'bold', fontSize: '15px', align: "left", margin: '0' }} title="Υπεύθυνοι" />
                                         <List dense={true}>
                                             {/*Κάνουμε iterate στους προς εισαγωγή επιβλέποντες και δημιουργούμε μια λίστα που την γεμίζουμε με τα στοιχεία τους*/}
                                             {stateSupervisor.map((user) => {
@@ -187,7 +187,7 @@ export default function EditLab() {
                                                         <ListItem
                                                             secondaryAction={
                                                                 <Popconfirm
-                                                                    title={'Είστε σίγουρος ότι θέλετε να διαγράψετε τον υπέυθηνο εργαστηρίου'}
+                                                                    title={'Είστε σίγουρος ότι θέλετε να διαγράψετε τον υπεύθυνο εργαστηρίου'}
                                                                     onConfirm={(event) => deleteCoSupervisors(event, user)}
                                                                     okText={'Ναι'}
                                                                     cancelText={'Οχι'}

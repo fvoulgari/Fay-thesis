@@ -14,14 +14,16 @@ export default async function login(req, res) {
         let client;
         let rows = [];
         try {
+            console.log('here')
         client = await pool.connect();
        
             let result = await client.query(
                 `
-          select * from users where email=$1 
+          select * from supervisor where email=$1 
           `,
                 [email]
             );
+            console.log('here')
 
             rows = result.rows;
             if (rows.length > 0) {

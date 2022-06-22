@@ -29,12 +29,12 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import HomeIcon from '@mui/icons-material/Home';
 import InsightsIcon from '@mui/icons-material/Insights';
-import { getTeams, getAppCookies, checkClass, getRepos, getGithubInfo, getCoSupervisors, getExerciseInfo, getTotals } from '../../Lib/dao';
+import { getTeams, getAppCookies, checkClass, getRepos, getGithubInfo, getCoSupervisors, getExerciseInfo, getTotals, getUsers } from '../../Lib/dao';
 import { styled } from '@mui/material/styles';
 import HomeClass from '../../src/components/home';
 import { Button } from 'antd';
 
-//TODO 1 κουμπί για εναλλαγή προβαλόμενων στατιστικών
+
 
 //Δημιουργούμε context έτσι ώστε να μπορούμε να μοιραστούμε state, μεταβλητές και συναρτήσεις με imported components
 export const contextOptions = createContext();
@@ -62,7 +62,7 @@ const StyledBreadcrumb = styled(Chip)(({ theme }) => {
     };
 })
 
-export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, githubInfo, supervisor, coSupervisors }) {
+export default function Class({ exerciseInfo, totals,users, name, teamsProps, repos, githubInfo, supervisor, coSupervisors }) {
     const router = useRouter();
     const [containerContent, setContainerContent] = useState('home') // Αρχική προβολή σελίδα με στατιστικά
     const [expanded, setExpanded] = React.useState(false);
@@ -81,9 +81,9 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
 
 
 
-//Φέρνουμε τα στατιστικά απο τις ασκήσεις
-    const getStats = async ()=>{
-        const res = await fetch('/api/getStats',  {
+    //Φέρνουμε τα στατιστικά απο τις ασκήσεις
+    const getStats = async () => {
+        const res = await fetch('/api/getStats', {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
@@ -95,22 +95,22 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
         })
 
         const data = await res.json();
-        
-        if(data.success){
+
+        if (data.success) {
             setExercisesDB(data.exercises)
             setMax(data.max)
         }
         setIsLoading(false)
     }
 
-    useEffect(()=>{
-        try{
+    useEffect(() => {
+        try {
             getStats()
 
-        }catch(error){
+        } catch (error) {
             console.log(error)
         }
-    },[])
+    }, [])
 
 
     const handleChange = (panel) => (event, isExpanded) => {
@@ -118,13 +118,9 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
     };
 
 
-    const handleChangeStats = (event) => {
-        setSelectStats(event.target.value);
-    };
 
 
-
-    const handleHome =  async (event) => {
+    const handleHome = async (event) => {
         setContainerContent('home')
     }
     const handleCreateTeam = async (event) => {
@@ -148,8 +144,8 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
 
 
 
-   
- 
+
+
 
 
     return (
@@ -169,6 +165,7 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
                     exerciseInfo,
                     setExercises,
                     max,
+                    users,
                     isLoading,
                     setSelectStats: setSelectStats,
                     type: selectStats,
@@ -196,7 +193,7 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
                         />
                     </Breadcrumbs>
                 </div>
-                <div style={{ marginBottom: '4%' , marginLeft: '4%', marginRight: '4%', display: 'flex', justifyContent: 'center', backgroundColor: "white" }}>
+                <div style={{ marginBottom: '4%', marginLeft: '4%', marginRight: '4%', display: 'flex', justifyContent: 'center', backgroundColor: "white" }}>
 
                     <Box sx={{ display: 'flex' }}>
 
@@ -212,7 +209,7 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
                             variant="permanent"
                             anchor="left"
                         >
-                            <Toolbar ><Button onClick={handleHome} style={{ width: '100%',borderRadius: 20, display: 'flex', justifyContent: 'center', fontWeight: 'bold', fontSize: '15px' }}>Home</Button>  </Toolbar>
+                            <Toolbar ><Button onClick={handleHome} style={{ width: '100%', borderRadius: 20, display: 'flex', justifyContent: 'center', fontWeight: 'bold', fontSize: '15px' }}>Home</Button>  </Toolbar>
 
                             <Divider />
                             <Accordion expanded={expanded === 'panel3'} onChange={handleChange('panel3')}>
@@ -232,7 +229,7 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
                                                 <ListItemIcon>
                                                     <InsightsIcon />
                                                 </ListItemIcon>
-                                                <ListItemText primary={'Ασκήσεις'} />
+                                                <ListItemText primary={'Dashboard'} />
                                             </ListItemButton>
                                         </ListItem>
                                         <ListItem disablePadding>
@@ -260,20 +257,21 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
                                 <AccordionDetails>
                                     <List sx={{ padding: '0', margin: 0 }}>
                                         <ListItem disablePadding>
-                                            <ListItemButton onClick={handleEditExercise}>
-                                                <ListItemIcon>
-                                                    {<EditIcon />}
-                                                </ListItemIcon>
-                                                <ListItemText primary={'Επεξεργασία '} />
-                                            </ListItemButton>
-                                        </ListItem>
-                                        <Divider />
-                                        <ListItem disablePadding>
                                             <ListItemButton onClick={handleClick}>
                                                 <ListItemIcon>
                                                     {<AddBoxIcon />}
                                                 </ListItemIcon>
                                                 <ListItemText primary={'Δημιουργία'} />
+                                            </ListItemButton>
+                                        </ListItem>
+
+                                        <Divider />
+                                        <ListItem disablePadding>
+                                            <ListItemButton onClick={handleEditExercise}>
+                                                <ListItemIcon>
+                                                    {<EditIcon />}
+                                                </ListItemIcon>
+                                                <ListItemText primary={'Επεξεργασία '} />
                                             </ListItemButton>
                                         </ListItem>
                                         <Divider />
@@ -337,7 +335,7 @@ export default function Class({ exerciseInfo,totals, name, teamsProps,  repos, g
                         {containerContent == 'editLab' && <EditLab />}
 
                         {containerContent == 'stats' && <Stats />}
-                        
+
                         {containerContent == 'home' && <HomeClass />}
 
 
@@ -385,6 +383,7 @@ export async function getServerSideProps(context) {
     const githubInfo = await getGithubInfo(name)
     const exerciseInfo = await getExerciseInfo(name)
     const totals = await getTotals(name)
+    const users = await getUsers(name)
 
     const coSupervisors = await getCoSupervisors(name);
 
@@ -399,6 +398,7 @@ export async function getServerSideProps(context) {
             repos,
             exerciseInfo,
             totals,
+            users,
             githubInfo: githubInfo,
             supervisor: cookies.supervisor,
             coSupervisors: coSupervisors

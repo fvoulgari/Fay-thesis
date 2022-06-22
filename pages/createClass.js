@@ -5,21 +5,16 @@ import { useRouter } from 'next/router';
 import _ from 'lodash';
 // import { getActiveOrganizations } from '../Lib/dao';
 import {
-    Button, TextField, Container, Typography, Card, CardHeader, Table, IconButton, List, ListItem, ListItemAvatar, TableBody, TableCell, ListItemText, tableCellClasses, TableContainer, TableHead, TableRow, Checkbox, Paper, FormControl, InputLabel, Select, MenuItem, Modal, Box
+    Button, TextField, Container, Typography, Card, CardHeader, Table, IconButton, List, ListItem, ListItemAvatar, TableBody, TableCell, ListItemText, tableCellClasses, TableContainer, TableHead, TableRow, Checkbox, Paper, FormControl, InputLabel, Select, MenuItem, Modal, Box, Chip, Breadcrumbs
 } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { styled } from '@mui/material/styles';
+import HomeIcon from '@mui/icons-material/Home';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { emphasize, styled } from '@mui/material/styles';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import { getAppCookies } from '../Lib/dao';
-import showNotification from '../Lib/notification'
-
-//TODO 1 Να γίνει πιο τυποποιημένη η ονομασία των εργαστηρίων 
-//TODO 2 Να γίνει υποχρεωτική η συμπλήρωση του ονόματος του εργαστηρίου για να πατηθεί το κουμπί δημιουργία. 
-//TODO 3 Μη αυτόματος χωρισμός ομάδων φοιτητών (Εισαγωγή πολλών csv?)
-
-
-
+import showNotification from '../Lib/notification';
 
 
 
@@ -41,23 +36,6 @@ const ece = [
 
 
 
-
-const Input = styled('input')({
-    display: 'none'
-});
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 500,
-    bgcolor: 'background.paper',
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 4,
-};
-
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
         backgroundColor: theme.palette.action.disabledBackground,
@@ -77,16 +55,34 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
         border: 0,
     },
 }));
+const StyledBreadcrumb = styled(Chip)(({ theme }) => {
+    const backgroundColor =
+        theme.palette.mode === 'light'
+            ? theme.palette.grey[100]
+            : theme.palette.grey[800];
+    return {
+        backgroundColor,
+        height: theme.spacing(3),
+        color: theme.palette.text.primary,
+        fontWeight: theme.typography.fontWeightRegular,
+        '&:hover, &:focus': {
+            backgroundColor: emphasize(backgroundColor, 0.06),
+        },
+        '&:active': {
+            boxShadow: theme.shadows[1],
+            backgroundColor: emphasize(backgroundColor, 0.12),
+        },
+    };
+})
 export default function CreateClass({ supervisor }) {
     const router = useRouter();
     const [organization, setOrganization] = useState([]);
     const [year, setYear] = useState('22/23');
     const [email, setEmail] = useState([]);
-    const [open, setOpen] = useState(false);
+    const [secret, setSecret] = useState('');
 
 
-    const [coSupervisors, setCoSupervisors] = useState({ account: ['uop.supervisor.1@gmail.com', 'fayrevof@gmail.com'] });
-    const [csvfiles, setCsvFiles] = useState({ csv: [] });
+    const [coSupervisors, setCoSupervisors] = useState({ account: ['fayrevof@gmail.com'] });
 
     //email επιβλέποντα
     const handleName = (event) => {
@@ -99,10 +95,13 @@ export default function CreateClass({ supervisor }) {
     const handleOrganization = (event) => {
         setOrganization(event.target.value);
     };
+    const handleSecret = (event) => {
+        setSecret(event.target.value);
+    };
 
 
     const createNewClass = async () => {
-        if (organization && coSupervisors.account) {
+        if (organization && coSupervisors.account && secret) {
             // Αρχικοποιούμε ένα FormData object  και του περνάμε τα δεδομένα απο την φόρμα μας.
 
             const res = await fetch('/api/createClass', {
@@ -116,7 +115,8 @@ export default function CreateClass({ supervisor }) {
                     organizationName: ece.filter((temp) => temp.code == organization),
                     coSupervisors: coSupervisors.account,
                     year: year,
-                    supervisor: supervisor.githubname
+                    supervisor: supervisor.githubname,
+                    secret
                 })
             });
             const data = await res.json()
@@ -130,7 +130,7 @@ export default function CreateClass({ supervisor }) {
             } else {
                 showNotification(
                     'error',
-                    'Anπιτυχής αρχικοποιήση εργαστηρίου',
+                    'Ανεπιτυχής αρχικοποιήση εργαστηρίου',
                 );
             }
 
@@ -138,7 +138,7 @@ export default function CreateClass({ supervisor }) {
         } else {
             showNotification(
                 'warning',
-                'Anπιτυχής αρχικοποιήση εργαστηρίου',
+                'Ανεπιτυχής αρχικοποιήση εργαστηρίου',
                 'Δεν έχετε συμπληρώσει όλα τα πεδία.'
             );
         }
@@ -159,9 +159,20 @@ export default function CreateClass({ supervisor }) {
 
     return (
         <>
-            <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '6%', marginBottom: '2%', padding: '3%' }}>
+            <div style={{ marginTop: '6%', marginLeft: '15%' }} role="presentation">
+                <Breadcrumbs aria-label="breadcrumb">
+                    <StyledBreadcrumb
+                        component="a"
+                        label="Classhome"
+                        onClick={() => { router.push('/classhome') }}
+                        icon={<HomeIcon fontSize="small" />}
+                    />
+                </Breadcrumbs>
+            </div>
+            <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '1%', marginBottom: '2%', padding: '3%' }}>
+
                 <Card style={{ width: '100%', marginLeft: '2%' }}>
-                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}><h1 style={{ color: '#424242' }}>Αρχικοποίηση Εργαστηρίου</h1></div>
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}><h1 style={{ color: '#424242', margin: '2%' }}>Αρχικοποίηση Εργαστηρίου</h1></div>
 
                     <TableContainer component={Paper}>
                         <Table aria-label="caption table">
@@ -210,17 +221,17 @@ export default function CreateClass({ supervisor }) {
                                 </StyledTableRow>
                                 <StyledTableRow sx={{ height: '200px' }}>
                                     <StyledTableCell component="th" scope="row">
-                                        <h4 style={{ fontWeight: 'bold' }}>Συνεπιβλέποντες εργαστηρίου</h4>
+                                        <h4 style={{ fontWeight: 'bold' }}>Προσθήκη υπευθύνου </h4>
                                     </StyledTableCell>
                                     <StyledTableCell align="left" component="th" scope="row">
-                                        <TextField style={{ width: '60%' }} value={email} label="Email επιβλέποντα" variant="outlined" type="text" onChange={handleName} />
+                                        <TextField style={{ width: '60%' }} value={email} label="Github Email" variant="outlined" type="text" onChange={handleName} />
                                         <IconButton onClick={addCoSupervisors} style={{ marginLeft: '2%' }} > <AddCircleIcon fontSize="large" color="primary" /></IconButton>
 
                                     </StyledTableCell>
                                     <StyledTableCell align="right" component="th" scope="row">
 
                                         {coSupervisors.account.length > 0 ? <Card >
-                                            <CardHeader titleTypographyProps={{ variant: 'h6', fontWeight: 'bold', fontSize: '15px', align: "left", margin: '0' }} title="Συν-επιβλέποντες" />
+                                            <CardHeader titleTypographyProps={{ variant: 'h6', fontWeight: 'bold', fontSize: '15px', align: "left", margin: '0' }} title="Υπεύθυνοι" />
                                             <List dense={true}>
                                                 {/*Κάνουμε iterate στους προς εισαγωγή επιβλέποντες και δημιουργούμε μια λίστα που την γεμίζουμε με τα στοιχεία τους*/}
                                                 {coSupervisors.account.map((user) => {
@@ -253,23 +264,37 @@ export default function CreateClass({ supervisor }) {
 
                                     </StyledTableCell>
                                 </StyledTableRow>
-                          
 
-                              
-                                    <StyledTableRow>
-                                        <StyledTableCell component="th" scope="row">
-                                            <Button color="primary" variant="contained" component="span" onClick={createNewClass}>
-                                                ΔΗΜΙΟΥΡΓΙΑ
-                                            </Button>
-                                        </StyledTableCell>
-                                        <StyledTableCell align='right' component="th" scope="row">
+                                <StyledTableRow>
+                                    <StyledTableCell component="th" scope="row">
+                                    <h4 style={{ fontWeight: 'bold' }}>  Συνθηματικό μαθήματος</h4>
 
-                                        </StyledTableCell>
-                                        <StyledTableCell component="th" scope="row">
-                                        </StyledTableCell>
-                                    </StyledTableRow> 
-                                </TableBody>
-                            </Table>
+                                    </StyledTableCell>
+                                    <StyledTableCell align='right' component="th" scope="row">
+                                    
+                                    </StyledTableCell>
+                                    <StyledTableCell align='right' component="th" scope="row">
+                                    <TextField style={{ width: '60%' }} value={secret} label="Συνθηματικό" variant="outlined" type="text" onChange={handleSecret} />
+
+                                    </StyledTableCell>
+                                </StyledTableRow>
+
+
+                                <StyledTableRow>
+                                    <StyledTableCell component="th" scope="row">
+                                        <Button color="primary" variant="contained" component="span" onClick={createNewClass}>
+                                            ΔΗΜΙΟΥΡΓΙΑ
+                                        </Button>
+                                    </StyledTableCell>
+                                    <StyledTableCell align='right' component="th" scope="row">
+
+                                    </StyledTableCell>
+                                    <StyledTableCell component="th" scope="row">
+
+                                    </StyledTableCell>
+                                </StyledTableRow>
+                            </TableBody>
+                        </Table>
                     </TableContainer>
                 </Card>
             </Container>
@@ -282,8 +307,8 @@ export async function getServerSideProps(context) {
     const KEY = process.env.JWT_KEY;
     //Παίρνουμε όλα τα repos μέσω της getRepos(), έπειτα ελέγχουμε ποιά από αυτά είναι template και τα δίνουμε ως prop στο component  
     //const myOrgs = await listUserOrganizations
-    
-    
+
+
     //Ελέγχουμε αν είναι συνδεδεμένος ο χρήστης και γυρνάμε τα στοιχεία του.
     let cookies = await getAppCookies(context.req);
     if (!cookies.sucess) {

@@ -24,7 +24,7 @@ export default async function handler(req, res) {
                 if (payload.email) {
                     let result = await client.query(
                         `
-                  select * from users  where email=$1
+                  select * from supervisor  where email=$1
                   `,
                         [payload.email]
                     );

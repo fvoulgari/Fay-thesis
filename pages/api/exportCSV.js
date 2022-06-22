@@ -14,6 +14,7 @@ export default async function handler(req, res) {
         try {
             const csvData = await exportCSV(req.body.exercise, req.body.team, req.body.organization)
             if (csvData.length > 0) {
+                console.log(csvData)
                 //Χρησιμοποιώντας τον stringnifier του csv module  μετατρέπουμε το json σε csv και το επιστρέφουμε στο client.
                 stringify(csvData, { header: true , bom: true
                 })

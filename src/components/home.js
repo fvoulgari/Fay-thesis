@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import _ from 'lodash';
 import {
-   Card, Table, TableBody, TableCell,  TableContainer, TableHead, TableRow,  Chip
+   Card, Table, TableBody, TableCell,  TableContainer, TableHead, TableRow,  Chip, Modal
 } from '@mui/material';
 import AccountBoxOutlinedIcon from '@mui/icons-material/AccountBoxOutlined';
 import { contextOptions } from '../../pages/class/[name]';
@@ -11,7 +11,20 @@ import LibraryBooksOutlinedIcon from '@mui/icons-material/LibraryBooksOutlined';
 import {  Calendar, Badge } from 'antd';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import moment from 'moment';
+import { DataGrid } from '@mui/x-data-grid';
 
+const style = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: '60vw',
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+    height: '50vh'
+};
 
 
 export default function HomeClass({ }) {
@@ -59,8 +72,8 @@ export default function HomeClass({ }) {
 
             </div>
 
-
-
+        
+    
             <Card style={{ width: '70vw', height: '95%', marginLeft: '2%' }}>
                 <div style={{ marginBottom: '5%', display: 'flex', justifyContent: 'space-around', width: '100%' }}>
                     <TableContainer style={{ marginRight: '1%' ,border: '1px solid rgba(224, 224, 224, 1)'}}>
@@ -81,7 +94,7 @@ export default function HomeClass({ }) {
                             <TableBody>
                                 <TableRow>
                                     <TableCell align='center'>
-                                        Σύνολο Μαθητών
+                                        Σύνολο φοιτητών
                                     </TableCell>
                                     <TableCell align='center'>
                                         <   Chip icon={<SchoolOutlinedIcon />} label={`${totals.teamMembers}`} />

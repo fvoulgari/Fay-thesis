@@ -31,7 +31,7 @@ export async function getAppCookies(req) {
             if (payload.email) {
                 let result = await client.query(
                     `
-                  select * from users  where email=$1
+                  select * from supervisor  where email=$1
                   `,
                     [payload.email]
                 );
@@ -65,7 +65,7 @@ export async function deleteFile(organization, exercise, file) {
     const orgNames = []
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [organization]
@@ -90,18 +90,23 @@ export async function deleteFile(organization, exercise, file) {
         sha: file.sha
     }
     )
+    console.log('exercise' ,exercise)
+
       const team = await client.query(
         `
     Select * from exercise  e inner join team t on e.team = t.team_id where e.name like $1
         `, [exercise])
     if (team.rows.length == 0) return false
 
+    console.log('team.rows[0].team_id' ,team.rows[0].team_id)
+
     const studentRows = await client.query(
         `
-    Select * from team_member where team like $1
+    Select * from team_member where team = $1
         `, [team.rows[0].team_id])
 
     let students
+    console.log(studentRows.rows)
 
     if (studentRows.rows.length > 0) {
         students = studentRows.rows.map((student) => {
@@ -111,37 +116,53 @@ export async function deleteFile(organization, exercise, file) {
         //Για όλους τους μαθητές διαγράφουμε τα repositories  και τα  ξαναδημιουργούμε από την αρχή 
         for (let student of students) {
 
-            const { errorDel, stdoutDel, stderrDel } = await util.promisify(exec)(` gh api  --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${student}-${exercise}`);
-            if (errorDel) {
-                console.log(`error: ${errorDel.message}`);
-                return;
+            console.log('student' ,student)
+            const reqCommit = await octokit.request('GET /repos/{owner}/{repo}/commits', {
+                owner: result.rows[0].name,
+                repo: `${student}-${exercise}`,
+                path: file.path
+            })
+        
+            //Χρησιμοποιώντας τις πληροφορίες από το  τελευταίο commit κάνω διαγραφή του φακέλου ακολουθώντας τις οδηγίες από το manual του github
+            const req = await octokit.request('DELETE /repos/{owner}/{repo}/contents/{path}', {
+                owner: result.rows[0].name,
+                repo: `${student}-${exercise}`,
+                path: file.path,
+                message: reqCommit.data[0].commit.message,
+                sha: file.sha
+            })
 
-            }
-            if (stderrDel) {
-                console.log(`stderr: ${stderrDel}`);
-                return;
-            }
+            // const { errorDel, stdoutDel, stderrDel } = await util.promisify(exec)(` gh api  --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${student}-${exercise}`);
+            // if (errorDel) {
+            //     console.log(`error: ${errorDel.message}`);
+            //     return;
 
-            const { error, stdout, stderr } = await util.promisify(exec)(`gh repo create ${result.rows[0].name}/${student}-${exercise} --private --template ${result.rows[0].name}/${exercise} `);
-            if (error) {
-                console.log(`error: ${error.message}`);
-                return false;
+            // }
+            // if (stderrDel) {
+            //     console.log(`stderr: ${stderrDel}`);
+            //     return;
+            // }
 
-            }
-            if (stderr) {
-                console.log(`stderr: ${stderr}`);
-                return false;
-            }
-            const { errorInv, stdoutInv, stderrInv } = await util.promisify(exec)(`  gh api --method PUT -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${exercise}/collaborators/${student}`);
-            if (errorInv) {
-                console.log(`error: ${errorInv.message}`);
-                return false;
+            // const { error, stdout, stderr } = await util.promisify(exec)(`gh repo create ${result.rows[0].name}/${student}-${exercise} --private --template ${result.rows[0].name}/${exercise} `);
+            // if (error) {
+            //     console.log(`error: ${error.message}`);
+            //     return false;
 
-            }
-            if (stderrInv) {
-                console.log(`stderr: ${stderrInv}`);
-                return false;
-            }
+            // }
+            // if (stderr) {
+            //     console.log(`stderr: ${stderr}`);
+            //     return false;
+            // }
+            // const { errorInv, stdoutInv, stderrInv } = await util.promisify(exec)(`  gh api --method PUT -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${exercise}/collaborators/${student}`);
+            // if (errorInv) {
+            //     console.log(`error: ${errorInv.message}`);
+            //     return false;
+
+            // }
+            // if (stderrInv) {
+            //     console.log(`stderr: ${stderrInv}`);
+            //     return false;
+            // }
         }
 
 
@@ -171,7 +192,7 @@ export async function deleteLab(organization) {
     client = await pool.connect();
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [organization]
@@ -236,8 +257,8 @@ export async function deleteLab(organization) {
 
     let deleteExe1 = await client.query(
         `
-                DELETE from grades  
-                    where exercise  in  ( select name from exercise where lesson = $1)
+                DELETE from grade  
+                    where exercise  in  ( select name from exercise where organization = $1)
    `,
         [organization]
     );
@@ -245,7 +266,7 @@ export async function deleteLab(organization) {
     let deleteExe = await client.query(
         `
                 DELETE from exercise  
-                    where lesson=$1  
+                    where organization=$1  
    `,
         [organization]
     );
@@ -253,7 +274,7 @@ export async function deleteLab(organization) {
     let deleteTM = await client.query(
         `
                 DELETE from team_member tm  
-                    where EXISTS ( select 1 from team t where t.team_id = tm.team and t.lesson=$1)
+                    where EXISTS ( select 1 from team t where t.team_id = tm.team and t.organization=$1)
    `,
         [organization]
     );
@@ -262,14 +283,14 @@ export async function deleteLab(organization) {
     let deleteT = await client.query(
         `
                 DELETE from team   
-                    where lesson = $1
+                    where organization = $1
    `,
         [organization]
     );
 
     let deleteOrgSu = await client.query(
         `
-                DELETE from organization_supervisors   
+                DELETE from organization_supervisor  
                     where organization = $1
    `,
         [organization]
@@ -278,7 +299,7 @@ export async function deleteLab(organization) {
 
     let updateOrg = await client.query(
         `
-                UPDATE  organizations   SET githubname=name , year='',lab_name='',active=false
+                UPDATE  organization   SET githubname=name , year='',lab_name='',active=false
                     where githubname = $1
    `,
         [organization]
@@ -314,7 +335,7 @@ export async function saveGrade(exercise,teamMember,grade,comment) {
         if(teamRows.rows.length==0)return []
     let result = await client.query(
         `
-        select * from grades g inner  join team_member tm on tm.team_member_id = g.team_member where g.exercise = $1 and tm.member_github_name=  $2
+        select * from grade g inner  join team_member tm on tm.team_member_id = g.team_member where g.exercise = $1 and tm.member_github_name=  $2
 
    `,
         [exercise,teamMember]
@@ -323,7 +344,7 @@ export async function saveGrade(exercise,teamMember,grade,comment) {
     if (result.rows.length == 0){
         let result = await client.query(
             `
-            INSERT INTO  grades(exercise,team_member,grade,comment) VALUES( $1,$2,$3,$4)
+            INSERT INTO  grade(exercise,team_member,grade,comment) VALUES( $1,$2,$3,$4)
             returning *
     
        `,
@@ -332,7 +353,7 @@ export async function saveGrade(exercise,teamMember,grade,comment) {
     } else{
         let result = await client.query(
             `
-            UPDATE grades SET grade=$1 ,comment= $4 WHERE exercise = $2  and team_member = $3
+            UPDATE grade SET grade=$1 ,comment= $4 WHERE exercise = $2  and team_member = $3
             returning *
     
        `,
@@ -360,7 +381,7 @@ export async function getGithubInfo(classname) {
     client = await pool.connect();
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [classname]
@@ -389,7 +410,7 @@ export async function getExerciseInfo(classname) {
     let result = await client.query(
         `
                 select * from exercise e 
-                    where e.lesson=$1  
+                    where e.organization=$1  
    `,
         [classname]
     );
@@ -417,7 +438,7 @@ export async function getReposFiles(classname, repo) {
     const orgNames = []
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [classname]
@@ -460,7 +481,7 @@ export async function getRepos(classname) {
     const orgNames = []
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [classname]
@@ -499,7 +520,7 @@ export async function getContents(classname, exercise) {
     const orgNames = []
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [classname]
@@ -577,7 +598,7 @@ export async function checkClass(user, orgName) {
     for (let org of orgs) {
         let result = await client.query(
             `
-                select * from organizations org 
+                select * from organization org 
                     where org.name=$1 
                     and  org.active is true 
    `,
@@ -590,7 +611,7 @@ export async function checkClass(user, orgName) {
     if (orgNames.includes(orgName) == false) return false
     let result = await client.query(
         `
-            select * from organizations org 
+            select * from organization org 
                 where org.githubname=$1 
                 and  org.active is true 
 `,
@@ -647,7 +668,7 @@ export async function getActiveOrganizations() {
     for (let org of orgs) {
         let result = await client.query(
             `
-            select * from organizations  where name=$1 and active is true 
+            select * from organization  where name=$1 and active is true 
             `,
             [org]
         );
@@ -687,8 +708,8 @@ export async function getUserOrganizations(user) {
     for (let org of orgs) {
         let result = await client.query(
             `
-                select * from organizations org 
-                    inner join  organization_supervisors t on  t.organization = org.githubname  
+                select * from organization org 
+                    inner join  organization_supervisor t on  t.organization = org.githubname  
                     where org.name=$1 
                     and  org.active is true 
                     and t.supervisor  = $2
@@ -714,15 +735,14 @@ export async function deleteSupervisor(organization,email){
         client = await pool.connect();
         const result = await client.query(
             `
-            Select * from organizations where  githubname=$1
+            Select * from organization where  githubname=$1
             `, [organization])
         if(result.rows.length==0)return false
      
         const user =  await client.query(
             `
-            Select * from users where  email=$1
+            Select * from supervisor where  email=$1
             `, [email])
-            console.log(user.rows)
 
             if(user.rows.length==0) return false
             console.log('here')
@@ -739,7 +759,7 @@ export async function deleteSupervisor(organization,email){
             }
 
         const update = await client.query(
-            `DELETE FROM  organization_supervisors WHERE supervisor=$1 and owner = false
+            `DELETE FROM  organization_supervisor WHERE supervisor=$1 and owner = false
                 `, [user.rows[0].githubname])
 
         return true
@@ -822,7 +842,7 @@ console.log(exercise,team,organization)
 
         const teamRows = await client.query(
             `
-              Select * from team where team_id = $1 and lesson = $2
+              Select * from team where team_name = $1 and organization = $2
                
                 `, [team,organization])
     
@@ -831,8 +851,7 @@ console.log(exercise,team,organization)
         const result = await client.query(`    
                     select  o.lab_name as lab ,
                     e."name" as exercise,
-                    e.lesson  as LabCode ,
-                    e.no_exercise as  NumExercise,
+                    e.organization  as LabCode ,
                     tm.member_github_name  as Github,
                     tm.first_name  as firstName,
                     tm.last_name  as lastName,
@@ -840,9 +859,9 @@ console.log(exercise,team,organization)
                     g.grade as grade,
                     g.comment as comment   from  exercise e
                        inner join team_member tm on tm.team = e.team  
-                     inner join organizations o on o.githubname = e.lesson 
-                      left  join grades g on g.exercise  = e."name"  
-                                                where e.name=$1 and e.team=$2 and e.lesson=$3
+                     inner join organization o on o.githubname = e.organization 
+                      left  join grade g on (g.team_member  = tm.team_member_id and e."name"=g.exercise)
+                                                where e.name=$1 and e.team=$2 and e.organization=$3
                                                 `,[exercise,teamRows.rows[0].team_id,organization]);
         if(result.rows.length==0)return []
         return result.rows
@@ -859,28 +878,23 @@ export async function getStudentsInfo(organization, team,exercise){
     let client;
     try{
         client = await pool.connect();
-        console.log(organization, team,exercise)
         const teamRows = await client.query(
             `
-              Select * from team where team_id = $1 and lesson = $2
+              Select * from team where team_name = $1 and organization = $2
                
                 `, [team,organization])
     
             if(teamRows.rows.length==0)return  []
 
-        console.log(exercise,team,organization)
         const result = await client.query(`select e.*,tm.*,o."name" as org from exercise e
                                                 inner join team_member tm on tm.team = e.team  
-                                                inner join organizations o  on o.githubname =e.lesson 
-                                                where e.name=$1 and e.team=$2 and e.lesson=$3`,        
+                                                inner join organization o  on o.githubname =e.organization 
+                                                where e.name=$1 and e.team=$2 and e.organization=$3`,        
                                         [exercise,teamRows.rows[0].team_id,organization]);
         if(result.rows.length==0)return []
-        console.log('here')
         for(let i = 0; i<result.rows.length ; i++){
             const tempArr =  await getCommitsWithTime(result.rows[i].org,exercise, result.rows[i].member_github_name);
 
-            console.log(tempArr)
-            console.log('tempArr')
 
             result.rows[i].commits =  tempArr.length
             const temp=   JSON.parse( '{ "arr": ' + tempArr[0] +"}" )
@@ -898,10 +912,9 @@ export async function getStudentsInfo(organization, team,exercise){
 
             result.rows[i].workflow=workflow
             const grade = await client.query(`
-                        select * from grades g inner join team_member tm on 
+                        select * from grade g inner join team_member tm on 
                         g.team_member =tm.team_member_id where g.exercise = $1 and tm.team = $2 and tm.member_github_name=$3  
                         ` , [exercise, teamRows.rows[0].team_id,result.rows[i].member_github_name]);
-                console.log(grade)
 
                 if(grade.rows.length > 0 ){
                     result.rows[i].grade= grade.rows[0].grade
@@ -913,7 +926,7 @@ export async function getStudentsInfo(organization, team,exercise){
                 }
 
                 const averageGrade = await client.query(`
-                select * from grades g inner join team_member tm on g.team_member = tm.team_member_id where tm.team = $1 and tm.member_github_name=$2   and g.exercise != $3
+                select * from grade g inner join team_member tm on g.team_member = tm.team_member_id where tm.team = $1 and tm.member_github_name=$2   and g.exercise != $3
                 `,[teamRows.rows[0].team_id , result.rows[i].member_github_name,exercise]);
            
                 if(averageGrade.rows.length > 0 ){
@@ -997,7 +1010,7 @@ export async function getExercises(organization){
     const result = await client.query(
         `
         
-        Select e.*,u.name as org from exercise e inner join organizations u on u.githubname=e.lesson where  e.lesson=$1
+        Select e.*,u.name as org,t.team_name as teamName from exercise e inner join organization u on u.githubname=e.organization inner join team t on e.team =t.team_id where  e.organization=$1
         `, [organization])
     if(result.rows.length==0)return false
     for(let i=0;i<result.rows.length; i++){
@@ -1029,7 +1042,6 @@ export async function getExercises(organization){
             }
 
         }
-        console.log("DaoW Workflow: " ,workflow)
         const workflowTemp = workflow.map((flow)=> { return{ test: flow[3], value: flow}})
         result.rows[i].workflow=  _.groupBy(workflowTemp,"test")
 
@@ -1047,6 +1059,26 @@ export async function getExercises(organization){
     }
 }
 
+export async function updateTeamSupervisor(team, supervisor, organization){
+    let client;
+       console.log(team, supervisor, organization)
+    try{
+        client = await pool.connect();
+        const result = await client.query(
+            `
+            update team set team_supervisor = $1 where team_name=$2 and  organization=$3
+            returning *
+            `, [supervisor,team, organization])
+        if(result.rows.length==0)return false
+     
+        return true
+        
+    }catch(error){
+        console.log(error)
+        return false
+    }
+}
+
 export async function addSupervisor(organization,email){
     let client;
        
@@ -1054,21 +1086,20 @@ export async function addSupervisor(organization,email){
         client = await pool.connect();
         const result = await client.query(
             `
-            Select * from organizations where  githubname=$1
+            Select * from organization where  githubname=$1
             `, [organization])
         if(result.rows.length==0)return false
      
         const user =  await client.query(
             `
-            Select * from users where  email=$1
+            Select * from supervisor where  email=$1
             `, [email])
-            console.log(user.rows)
 
             if(user.rows.length==0) return false
             //Για όλους του  coSupervisors κάνουμε invite στο github account τους
         await signupInOrganization(result.rows[0].githubname, email , user.rows[0].githubname ,result.rows[0].secret  );
         const update = await client.query(
-            `INSERT INTO organization_supervisors(owner,organization,supervisor) VALUES (FALSE,$1,$2)
+            `INSERT INTO organization_supervisor(owner,organization,supervisor) VALUES (FALSE,$1,$2)
                 `, [organization,user.rows[0].githubname])
 
         return true
@@ -1088,7 +1119,7 @@ export async function getCoSupervisors(lab){
         //Παίρνουμε όλες τις πληροφορίες για τους coSupervisors
         const supervisors = await client.query(
             `
-                Select * from organization_supervisors o  inner join users u on u.githubname=o.supervisor where o.owner = false and o.organization = $1
+                Select * from organization_supervisor o  inner join supervisor u on u.githubname=o.supervisor where o.owner = false and o.organization = $1
                 `, [lab])
 
         return supervisors.rows
@@ -1103,30 +1134,32 @@ export async function getCoSupervisors(lab){
 }
 
 
-export async function createOrganizations(org, organizationName, user, supervisors, year,endDate) {
+export async function createOrganizations(org, organizationName, user, supervisors, year,secret) {
+    
     let client;
+    
     let rows = [];
     client = await pool.connect();
     const nonActiveMyOrgs = await client.query(
         `
-            Select * from organizations where active = false
+            Select * from organization where active = false
             `, [])
             //Έλεγχος αν υπάρχει ήδη υπάρχον εργαστηρίο
     const check = await client.query(
         `
-                Select * from organizations where active = true and year=$2 and lab_name=$1 and githubname=$3
+                Select * from organization where active = true and year=$2 and lab_name=$1 and githubname=$3
                     `, [organizationName, year, org])
     //Μετανομάζουμε το πρώτο μη ενεργό organization στον όνομα που δώθηκε από τον χρήστη και το θέτουμε ως active
     if (check.rows.length > 0) return false
 
     await client.query(
         `
-            UPDATE organizations SET githubname=$1 ,year=$3 ,lab_name=$4, active= true  WHERE name = $2 
-            `, [org, nonActiveMyOrgs.rows[0].name, year, organizationName])
+            UPDATE organization SET githubname=$1 ,year=$3 ,lab_name=$4, active= true,secret=$5  WHERE name = $2 
+            `, [org, nonActiveMyOrgs.rows[0].name, year, organizationName,secret])
 
     const update = await client.query(
                 `
-                INSERT INTO  organization_supervisors (supervisor,organization) VALUES($1 ,$2) 
+                INSERT INTO  organization_supervisor (supervisor,organization) VALUES($1 ,$2) 
                 returning *
                 `, [user, org])
     
@@ -1150,12 +1183,12 @@ export async function createOrganizations(org, organizationName, user, superviso
         signupInOrganization(nonActiveMyOrgs.rows[0].githubname, supervisor,nonActiveMyOrgs.rows[0].githubname ,nonActiveMyOrgs.rows[0].secret  );
 
         const supervisorRes= await client.query(`
-        select * from users where email = $1
+        select * from supervisor where email = $1
         `,[supervisor])
         if(supervisorRes.rows.length>0){
             await client.query(
                 `
-                INSERT INTO  organization_supervisors (supervisor,organization,owner) VALUES($1 ,$2,false) 
+                INSERT INTO  organization_supervisor (supervisor,organization,owner) VALUES($1 ,$2,false) 
                 returning *
                 `, [supervisorRes.rows[0].githubname, org])
         }
@@ -1182,7 +1215,7 @@ export async function createOrganizations(org, organizationName, user, superviso
     //             for (let i = 0; i < chunked.length; i++) {
     //                 let supervisorsDb = await client.query(
     //                     `
-    //                         select * from users  where email=$1
+    //                         select * from user  where email=$1
     //                         `,
     //                     [supervisors[i]]
     //                 );
@@ -1283,7 +1316,7 @@ export async function signupInOrganization(name, email, githubname, secret) {
         client = await pool.connect();
         const result = await client.query(
             `
-            Select * from organizations where secret like $1 and githubname=$2
+            Select * from organization where secret like $1 and githubname=$2
             `, [secret, name])
         //Εάν το συνθηματικό που έβαλε ο χρήστης δεν αντιστοιχεί με αυτό που έχει δηλωθεί στη βάση -> return false 
         if (result.rows.length == 0) return false
@@ -1293,7 +1326,7 @@ export async function signupInOrganization(name, email, githubname, secret) {
           })
           
           const data = await octokit.request('POST /orgs/{org}/invitations', {
-            org:result.rows[0].name,
+            org:   result.rows[0].name,
             email: email,
             role: 'admin',
          
@@ -1301,7 +1334,7 @@ export async function signupInOrganization(name, email, githubname, secret) {
      
         const update = await client.query(
             `
-            INSERT INTO  organization_supervisors (supervisor,organization) VALUES($1 ,$2) 
+            INSERT INTO  organization_supervisor (supervisor,organization) VALUES($1 ,$2) 
             returning *
             `, [githubname, name])
 
@@ -1352,7 +1385,7 @@ export async function deleteExercise(organization, exercise) {
   
     let result = await client.query(
         `
-                select * from organizations org 
+                select * from organization org 
                     where org.githubname=$1  
    `,
         [organization]
@@ -1408,7 +1441,7 @@ export async function deleteExercise(organization, exercise) {
     
     await client.query(
         `
-                DELETE from grades where exercise=$1
+                DELETE from grade where exercise=$1
    `,
         [exercise]
     );
@@ -1438,7 +1471,7 @@ export async function reInitializeTeam(team, supervisor, organization, file) {
         //Παίρνουμε πληροφορίες της ομάδας
         const teamRows = await client.query(
             `
-              Select * from team where team_name = $1 and lesson = $2
+              Select * from team where team_name = $1 and organization = $2
                
                 `, [team,organization])
     
@@ -1450,6 +1483,14 @@ export async function reInitializeTeam(team, supervisor, organization, file) {
         const records = await util.promisify(parse)(content);
         if (records.length == 0) return false
         //Διαγράφουμε τα παλιά μέλη από την ομάδα
+        const update = await client.query(
+            `
+                update team set team_supervisor=$1 where  team_id = $1 
+                returning *
+   `,
+            [teamRows.rows[0].team_id]
+
+        );
         const result = await client.query(
             `
                 DELETE FROM team_member WHERE team = $1
@@ -1494,15 +1535,14 @@ export async function initializeTeam(team, supervisor, organization, file) {
         await util.promisify(fs.rename)(file.file.filepath, '/tmp' + '/' + file.file.originalFilename);
         const content = await util.promisify(fs.readFile)("/tmp/" + file.file.originalFilename);
         const records = await util.promisify(parse)(content);
-        console.log(records)
         if (records.length == 0) return false
 
         const result = await client.query(
             `
-                INSERT INTO team(team_name,team_supervisor,lesson) VALUES($1,$2,$3)
+                INSERT INTO team(team_name,team_supervisor,organization) VALUES($1,$2,$3)
                 returning *
    `,
-            [team, supervisor.githubname, organization]
+            [team, supervisor, organization]
 
         );
         for (let i = 1; i < records.length; i++) {
@@ -1531,7 +1571,7 @@ export async function getTeamInformation(team , lab) {
 
         const teams = await client.query(
             `
-            Select * from team t inner join team_member tm on tm.team =t.team_id where t.team_name = $1 and t.lesson = $2
+            Select * from team t inner join team_member tm on tm.team =t.team_id where t.team_name = $1 and t.organization = $2
             `, [team,lab])
 
 
@@ -1555,7 +1595,7 @@ export async function deleteTeam(editedTeam , lab) {
         //Παίρνουμε πληροφορίες της ομάδας που βρίσκεται προς διαγραφή
         const team = await client.query(
         `
-          Select * from team where team_name = $1 and lesson = $2
+          Select * from team where team_name = $1 and organization = $2
            
             `, [editedTeam,lab])
 
@@ -1585,6 +1625,32 @@ export async function deleteTeam(editedTeam , lab) {
     }
 }
 
+export async function getUsers() {
+
+    let client;
+    let rows = [];
+    try{
+   
+    client = await pool.connect();
+
+    const users = await client.query(
+        `
+        Select * from supervisor 
+        `, [])
+
+
+   
+        return users.rows
+
+}catch(error){
+    return []
+}finally{
+    if(client)client.release()
+}
+
+
+
+}
 
 export async function getTotals(name) {
     let client;
@@ -1595,14 +1661,14 @@ export async function getTotals(name) {
 
     const teamMembers = await client.query(
         `
-        Select count(*) as num from team t inner join team_member tm  on tm.team  = t.team_id  where t.lesson =$1
+        Select count(*) as num from team t inner join team_member tm  on tm.team  = t.team_id  where t.organization =$1
         `, [name])
 
    
 
     const exercises = await client.query(
         `
-        select count(*) as num from exercise e  where e.lesson =$1 group by team 
+        select count(*) as num from exercise e  where e.organization =$1 group by team 
         `, [name])
         
 
@@ -1634,7 +1700,7 @@ export async function getTotals(name) {
 export async function demoCheckSimilarity() {
     
     try{
-    //Τρέχουμε scirpt που κατεβάζει τρια repositories τοπικά στο server μας  
+    //Τρέχουμε script που κατεβάζει τρια repositories τοπικά στο server μας  
     //και τρέχει το similarity check το οποίο αποθηκεύει τα αποτελέσαμτα στο /tmp/outputjplag
     const { errorMk, stdoutMk, stderrMk } = await util.promisify(exec)(`cd /opt/scripts && ./github2.sh `);
     if (errorMk) {
@@ -1647,7 +1713,6 @@ export async function demoCheckSimilarity() {
         return;
     }
 
-    //Τρέχουμε scirpt που κατεβάζει τρια repositories τοπικά στο server μας 
 
     const content = await util.promisify(fs.readFile)("/tmp/outputjplag/index.html");
     //κάνουμε clean up διαγράφοντας τα παραγώμενα αρχεία από το script
@@ -1687,7 +1752,7 @@ export async function getTeams(name) {
 
     const teams = await client.query(
         `
-            Select * from team where lesson=$1
+            Select * from team where organization=$1
             `, [name])
 
 
@@ -1735,7 +1800,7 @@ export async function addTeamRow(editedTeam, githubInsert, amInsert, firstNameIn
     //Παίρνουμε πληροφορίες της ομάδας 
     const team = await client.query(
         `
-          Select * from team where team_name = $1 and lesson = $2
+          Select * from team where team_name = $1 and organization = $2
            
             `, [editedTeam,lab])
             console.log(team.rows.length==0)
@@ -1757,7 +1822,7 @@ export async function addTeamRow(editedTeam, githubInsert, amInsert, firstNameIn
                     e.team as team, 
                     e.supervisor as supervisor ,
                     e.name as exerciseName,
-                    e.lesson as lesson  ,
+                    e.organization as lesson  ,
                     o.id as id,
                     o."name" as name ,
                     o.githubname as githubname ,
@@ -1765,7 +1830,7 @@ export async function addTeamRow(editedTeam, githubInsert, amInsert, firstNameIn
                     o.secret as secret  ,
                     o."year" as year,
                     o.lab_name as labName
-                from exercise e inner join organizations o on o.githubname = e.lesson  where e.team = $1
+                from exercise e inner join organizations o on o.githubname = e.organization  where e.team = $1
             `, [team.rows[0].team_id])
 
         //Για κάθε άσκηση δημιουργούμε repo για τον νέο φοιτητή και τον κάνουμε invite μέχω του github CLI
@@ -1846,7 +1911,7 @@ export async function editTeamRow(team,lab ) {
     //Παίρνουμε πληροφορίες της ομάδας
     const teamRows = await client.query(
         `
-          Select * from team where team_name = $1 and lesson = $2
+          Select * from team where team_name = $1 and organization = $2
            
             `, [team.team,lab])
 
@@ -1953,7 +2018,7 @@ export async function initializeTemplateProject(repo, organization, team, superv
 
         const teamRows = await client.query(
             `
-              Select * from team where team_name = $1 and lesson = $2
+              Select * from team where team_name = $1 and organization = $2
                
                 `, [team,organization])
     
@@ -1961,7 +2026,7 @@ export async function initializeTemplateProject(repo, organization, team, superv
          if(teamRows.rows.length==0) return false
         const result = await client.query(
             `
-                Select * from organizations where githubname LIKE $1
+                Select * from organization where githubname LIKE $1
                 `, [organization])
 
 
@@ -2040,7 +2105,7 @@ export async function initializeTemplateProject(repo, organization, team, superv
         }
         const resultExercise = await client.query(
             `
-               INSERT INTO exercise(team, supervisor, name, lesson,end_date) VALUES ($1,$2,$3,$4,$5)
+               INSERT INTO exercise(team, supervisor, name, organization,end_date) VALUES ($1,$2,$3,$4,$5)
                returning *
                 `, [teamRows.rows[0].team_id, supervisor, repo, organization,endDate])
 
@@ -2156,7 +2221,7 @@ export async function updateExercise(organization, exercise, files) {
         client = await pool.connect()
         const result = await client.query(
             `
-                Select * from organizations where githubname LIKE $1
+                Select * from organization where githubname LIKE $1
                 `, [organization])
 
         //Ελέγχουμε αν υπάρχουν φάκελοι και αν υπάρχει το organization
@@ -2373,6 +2438,429 @@ export async function updateExercise(organization, exercise, files) {
         return resp
     } catch (error) {
         console.log(error)
+        return resp
+    }finally{
+        if(client) client.release()
+    }
+}
+
+
+
+
+export async function updateAllExercise(organization, exercise, files) {
+    const resp = []
+    let client;
+
+    try {
+
+        const octokit = new Octokit({
+            auth: process.env.pat
+        })
+
+        client = await pool.connect()
+        const result = await client.query(
+            `
+                Select * from organization where githubname LIKE $1
+                `, [organization])
+
+                const team = await client.query(
+                    `
+                Select * from exercise  e inner join team t on e.team = t.team_id where e.name like $1
+                    `, [exercise])
+                if (team.rows.length == 0) return false
+            
+                const studentRows = await client.query(
+                    `
+                Select * from team_member where team = $1
+                    `, [team.rows[0].team_id])
+        
+                
+        
+                let students
+        
+                if (studentRows.rows.length > 0) {
+                    students = studentRows.rows.map((student) => {
+                        return student.member_github_name
+                    })
+                }
+                console.log('students', students)
+        //Ελέγχουμε αν υπάρχουν φάκελοι και αν υπάρχει το organization
+        if (files && result.rows.length > 0) {
+            if (files.file) {
+                //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
+                if (Array.isArray(files.file)) {
+                    for (let file of files.file) {
+                        console.log('file', file.filepath)
+                        await util.promisify(fs.rename)(file.filepath, `/tmp/` + file.originalFilename);
+                        const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + file.originalFilename)).toString()
+                        const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${file.originalFilename}`);
+                        if (errorRM) {
+                            console.log(`error: ${errorRM.message}`);
+                            return resp;
+
+                        }
+                        if (stderrRM) {
+                            console.log(`stderr: ${stderrRM}`);
+                            return resp;
+                        }
+                        //Κάνουμε encrypt τον φάκελο για να τον στείλουμε στο github
+                        var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+
+                        //Στέλνουμε τον φάκελο στο github
+
+                        const request = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                            owner: result.rows[0].name,
+                            repo: exercise,
+                            path: file.originalFilename,
+                            message: 'update contents',
+                            content: content
+                        });
+                        if (request.status == 201) {
+                            resp.push({
+                                path: request.data.content.path,
+                                size: request.data.content.size,
+                                sha: request.data.content.sha,
+                                type: request.data.content.type,
+                                url: request.data.content.url
+                            })
+                            if (studentRows.rows.length > 0) {
+
+                            for (let student of students) {
+                                const request = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                                    owner: result.rows[0].name,
+                                    repo: `${student}-${exercise}`,
+                                    path: file.originalFilename,
+                                    message: 'update contents',
+                                    content: content
+                                });
+                              
+                            }
+                        }
+                        }
+                    
+                    }
+                }
+                else {
+                    console.log('file', files.file.filepath)
+
+                    await util.promisify(fs.rename)(files.file.filepath, `/tmp/` + files.file.originalFilename);
+                    const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + files.file.originalFilename)).toString()
+                    const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${files.file.originalFilename}`);
+                    if (errorRM) {
+                        console.log(`error: ${errorRM.message}`);
+                        return resp;
+
+                    }
+                    if (stderrRM) {
+                        console.log(`stderr: ${stderrRM}`);
+                        return resp;
+                    }
+
+                    var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+                    const req = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                        owner: result.rows[0].name,
+                        repo: exercise,
+                        path: files.file.originalFilename,
+                        message: 'update contents',
+                        content: content
+                    });
+                    if (req.status == 201) {
+                        resp.push({
+                            path: req.data.content.path,
+                            size: req.data.content.size,
+                            sha: req.data.content.sha,
+                            type: req.data.content.type,
+                            url: req.data.content.url
+                        })
+
+                        if (studentRows.rows.length > 0) {
+
+                        for (let student of students) {
+                            const request = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                                owner: result.rows[0].name,
+                                repo: `${student}-${exercise}`,
+                                path: files.file.originalFilename,
+                                message: 'update contents',
+                                content: content
+                            });
+                          
+                        }
+                    }
+                    }
+
+                }
+            }
+            
+            if (files.testFile) {
+
+                //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
+                if (Array.isArray(files.testFile)) {
+                    for (let file of files.testFile) {
+                        console.log('testfile' , file.filepath)
+
+                        await util.promisify(fs.rename)(file.filepath, `/tmp/` + file.originalFilename);
+                        const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + file.originalFilename)).toString()
+                        const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${file.originalFilename}`);
+                        if (errorRM) {
+                            console.log(`error: ${errorRM.message}`);
+                            return resp;
+
+                        }
+                        if (stderrRM) {
+                            console.log(`stderr: ${stderrRM}`);
+                            return resp;
+                        }
+                        var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+                        
+                        const req = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                            owner: result.rows[0].name,
+                            repo: exercise,
+                            path: `.github/workflows/${file.originalFilename}`,
+                            message: 'update contents',
+                            content: content
+                        });
+                        if (req.status == 201) {
+                            resp.push({
+                                path: req.data.content.path,
+                                size: req.data.content.size,
+                                sha: req.data.content.sha,
+                                type: req.data.content.type,
+                                url: req.data.content.url
+                            })
+                            if (studentRows.rows.length > 0) {
+
+                            for (let student of students) {
+                                const request = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                                    owner: result.rows[0].name,
+                                    repo: `${student}-${exercise}`,
+                                    path: `.github/workflows/${file.originalFilename}`,
+                                    message: 'update contents',
+                                    content: content
+                                });
+                              
+                            }
+                        }
+                            
+                        }
+
+                    }
+                }
+                else {
+                    console.log('testfile' , files.testFile.filepat)
+    
+                    await util.promisify(fs.rename)(files.testFile.filepath, `/tmp/` + files.testFile.originalFilename);
+                    const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + files.testFile.originalFilename)).toString()
+                    const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${files.testFile.originalFilename}`);
+                    if (errorRM) {
+                        console.log(`error: ${errorRM.message}`);
+                        return resp;
+    
+                    }
+                    if (stderrRM) {
+                        console.log(`stderr: ${stderrRM}`);
+                        return resp;
+                    }
+                    var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+                    const req = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                        owner: result.rows[0].name,
+                        repo: exercise,
+                        path: `.github/workflows/${files.testFile.originalFilename}`,
+                        message: 'update contents',
+                        content: content
+                    });
+                    if (req.status == 201) {
+                        resp.push({
+                            path: req.data.content.path,
+                            size: req.data.content.size,
+                            sha: req.data.content.sha,
+                            type: req.data.content.type,
+                            url: req.data.content.url
+                        })
+                        if (studentRows.rows.length > 0) {
+    
+                        for (let student of students) {
+                            const request = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+                                owner: result.rows[0].name,
+                                repo: `${student}-${exercise}`,
+                                path: `.github/workflows/${files.testFile.originalFilename}`,
+                                message: 'update contents',
+                                content: content
+                            });
+                          
+                        }
+                    }
+                    }
+                }
+            }
+            
+        }
+     
+
+
+        //     for (let student of students) {
+
+        //         if (files && result.rows.length > 0) {
+        //             if (files.file) {
+        //                 //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
+        //                 if (Array.isArray(files.file)) {
+        //                     for (let file of files.file) {
+        //                         await util.promisify(fs.rename)(file.filepath, `/tmp/` + file.originalFilename);
+        //                         const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + file.originalFilename)).toString()
+        //                         const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${file.originalFilename}`);
+        //                         if (errorRM) {
+        //                             console.log(`error: ${errorRM.message}`);
+        //                             return resp;
+        
+        //                         }
+        //                         if (stderrRM) {
+        //                             console.log(`stderr: ${stderrRM}`);
+        //                             return resp;
+        //                         }
+        //                         //Κάνουμε encrypt τον φάκελο για να τον στείλουμε στο github
+        //                         var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+        
+        //                         //Στέλνουμε τον φάκελο στο github
+        
+        //                         const request = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+        //                             owner: result.rows[0].name,
+        //                             repo: `${student}-${exercise}`,
+        //                             path: file.originalFilename,
+        //                             message: 'update contents',
+        //                             content: content
+        //                         });
+
+        //                     }
+        //                 }
+        //                 else {
+        //                     await util.promisify(fs.rename)(files.file.filepath, `/tmp/` + files.file.originalFilename);
+        //                     const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + files.file.originalFilename)).toString()
+        //                     const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${files.file.originalFilename}`);
+        //                     if (errorRM) {
+        //                         console.log(`error: ${errorRM.message}`);
+        //                         return resp;
+        
+        //                     }
+        //                     if (stderrRM) {
+        //                         console.log(`stderr: ${stderrRM}`);
+        //                         return resp;
+        //                     }
+        
+        //                     var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+        //                     const req = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+        //                         owner: result.rows[0].name,
+        //                         repo: `${student}-${exercise}`,
+        //                         path: files.file.originalFilename,
+        //                         message: 'update contents',
+        //                         content: content
+        //                     });
+        
+        //                 }
+        //             }
+        //             if (files.testFile) {
+        //                 //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
+        //                 if (Array.isArray(files.testFile)) {
+        //                     for (let file of files.testFile) {
+        
+        //                         await util.promisify(fs.rename)(file.filepath, `/tmp/` + file.originalFilename);
+        //                         const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + file.originalFilename)).toString()
+        //                         const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${file.originalFilename}`);
+        //                         if (errorRM) {
+        //                             console.log(`error: ${errorRM.message}`);
+        //                             return resp;
+        
+        //                         }
+        //                         if (stderrRM) {
+        //                             console.log(`stderr: ${stderrRM}`);
+        //                             return resp;
+        //                         }
+        //                         var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+                                
+        //                         const req = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+        //                             owner: result.rows[0].name,
+        //                             repo: `${student}-${exercise}`,
+        //                             path: `.github/workflows/${file.originalFilename}`,
+        //                             message: 'update contents',
+        //                             content: content
+        //                         });
+        
+        //                     }
+        //                 }
+        //             }
+        //             else {
+        //                 await util.promisify(fs.rename)(files.testFile.filepath, `/tmp/` + files.testFile.originalFilename);
+        //                 const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + files.testFile.originalFilename)).toString()
+        //                 const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${files.testFile.originalFilename}`);
+        //                 if (errorRM) {
+        //                     console.log(`error: ${errorRM.message}`);
+        //                     return resp;
+        
+        //                 }
+        //                 if (stderrRM) {
+        //                     console.log(`stderr: ${stderrRM}`);
+        //                     return resp;
+        //                 }
+        //                 var content = CryptoJS.enc.Base64.stringify(Utf8.parse(originalFile));
+        //                 const req = await octokit.request('PUT /repos/{owner}/{repo}/contents/{path}', {
+        //                     owner: result.rows[0].name,
+        //                     repo: `${student}-${exercise}`,
+        //                     path: `.github/workflows/${files.testFile.originalFilename}`,
+        //                     message: 'update contents',
+        //                     content: content
+        //                 });
+                    
+        //             }
+        //         }
+
+
+
+
+
+        //     }
+
+
+
+        //     //     const { errorDel, stdoutDel, stderrDel } = await util.promisify(exec)(` gh api  --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${student}-${exercise}`);
+        //     //     if (errorDel) {
+        //     //         console.log(`error: ${errorDel.message}`);
+        //     //         return;
+
+        //     //     }
+        //     //     if (stderrDel) {
+        //     //         console.log(`stderr: ${stderrDel}`);
+        //     //         return;
+        //     //     }
+
+        //     //     const { error, stdout, stderr } = await util.promisify(exec)(`gh repo create ${result.rows[0].name}/${student}-${exercise} --private --template ${result.rows[0].name}/${exercise} `);
+        //     //     if (error) {
+        //     //         console.log(`error: ${error.message}`);
+        //     //         return false;
+
+        //     //     }
+        //     //     if (stderr) {
+        //     //         console.log(`stderr: ${stderr}`);
+        //     //         return false;
+        //     //     }
+        //     //     const { errorInv, stdoutInv, stderrInv } = await util.promisify(exec)(`  gh api --method PUT -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${exercise}/collaborators/${student}`);
+        //     //     if (errorInv) {
+        //     //         console.log(`error: ${errorInv.message}`);
+        //     //         return false;
+
+        //     //     }
+        //     //     if (stderrInv) {
+        //     //         console.log(`stderr: ${stderrInv}`);
+        //     //         return false;
+        //     //     }
+        //     // }
+
+
+        // } else {
+        //     return false
+        // }
+
+
+        return resp
+    } catch (error) {
+        console.trace(error)
         return resp
     }finally{
         if(client) client.release()

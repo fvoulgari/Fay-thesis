@@ -1,6 +1,6 @@
 import formidable from "formidable";
 import _ from 'lodash';
-import { updateExercise } from "../../Lib/dao";
+import { updateAllExercise } from "../../Lib/dao";
 
 
 // Δηλώνουμε το συγκεκριμένο config για να μπορέσουμε να διαβάσει το api τα αρχεία
@@ -16,8 +16,9 @@ export default async function handler(req, res) {
         form.parse(req, async function (err, fields, files) {
             const obj = JSON.parse(fields.formData)
             //Αν υπάρχει csv στην φόρμα καλούμε την createOrganizations με παράμετρο το csv αλλιώς την καλούμε χωρίς το csv
-            const resp= await updateExercise( obj.lesson, obj.name,  files);
-
+         //   const resp= await updateExercise( obj.lesson, obj.name,  files);
+            const resp= await updateAllExercise( obj.lesson, obj.name,  files);
+            
             if(resp.length>0){
                 res.json({
                     success: true,

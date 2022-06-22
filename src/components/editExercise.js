@@ -14,6 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { contextOptions } from '../../pages/class/[name]';
 import { Popconfirm } from 'antd';
+import showNotification from '../../Lib/notification';
 
 
 const Input = styled('input')({
@@ -118,7 +119,20 @@ export default function EditExercise({ repos }) {
             const data = await res.json();
             if (data.success) {
                 setGithubFiles([...githubFiles, ...data.data])
+                showNotification(
+                    'success',
+                    'Επιτυχής πρόσθεση αρχείων ',
+                );
+    
+            } else {
+                showNotification(
+                    'error',
+                    'Ανεπιτυχής πρόσθεση αρχείων',
+                    'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
+                );
+    
 
+            
             }
         }
     }
@@ -141,8 +155,21 @@ export default function EditExercise({ repos }) {
 
             const data = await res.json();
             if (data.success) {
+                showNotification(
+                    'success',
+                    'Επιτυχής διαγραφή αρχείων ',
+                );
                 setGithubFiles([])
                 setTemplateRepo(null)
+                
+    
+            } else {
+                showNotification(
+                    'error',
+                    'Ανεπιτυχής διαγραφή αρχείων',
+                    'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
+                );
+    
 
             }
         }
@@ -179,6 +206,7 @@ export default function EditExercise({ repos }) {
 
 
     }
+   
     const handleInfoChange = async () => {
         //Όταν αλλάζει το templateRepo τότε φέρνουμε όλα τα αρχεία από το github
         const res = await fetch('/api/getRepoInformation', {
@@ -223,7 +251,7 @@ export default function EditExercise({ repos }) {
                                     align='left'
 
                                 >
-                                    <p style={{ fontWeight: 'bold', fontSize: '20px' }}>Επεξεργασία εργαστηριακής άσκησης</p>
+                                    <p style={{ fontWeight: 'bold', fontSize: '20px' }}>Επεξεργασία  άσκησης</p>
                                 </TableCell>
                                 <TableCell>
                                 </TableCell>
@@ -261,6 +289,8 @@ export default function EditExercise({ repos }) {
                                     </Box>
                                 </TableCell>
                             </TableRow>
+                            
+                         
                             <TableRow>
                                 <TableCell>
                                     <Box style={{ display: 'flex', verticalAlign: 'middle' }} >
@@ -301,7 +331,7 @@ export default function EditExercise({ repos }) {
                                                 και η εκφώνηση σε μορφή .md
                                             </Typography>
                                         </Popover>
-                                        <span style={{ fontWeight: 'bold', fontSize: '17px' }}>Προσθέστε αρχεία</span>
+                                        <span style={{ fontWeight: 'bold', fontSize: '17px' }}>προσθηκη αρχείων</span>
                                     </Box>
 
                                 </TableCell>
@@ -379,8 +409,8 @@ export default function EditExercise({ repos }) {
                                 <TableCell >
                                 </TableCell>
                                 <TableCell align='right' >
-                                    <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="warning" onClick={updateStudentsRepository}>
-                                        Ανανεωση
+                                    <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="success" onClick={updateStudentsRepository}>
+                                        Προσθεση αρχειων
                                     </Button>
                                 </TableCell>
 
@@ -426,7 +456,7 @@ export default function EditExercise({ repos }) {
                                                     </a>
                                                 </ListItemAvatar>
                                                 <div style={{ verticalAlign: 'middle' }}>
-                                                    <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Αρχεία εργασίας   </span>
+                                                    <span style={{ fontSize: '20px', fontWeight: 'bold' }}>Αρχεία Άσκησης   </span>
 
                                                 </div>
                                             </ListItem>

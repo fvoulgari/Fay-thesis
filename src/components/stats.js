@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 
 import { styled } from '@mui/material/styles';
+
 import Box from '@mui/material/Box';
 import { contextOptions } from '../../pages/class/[name]';
 
@@ -44,8 +45,10 @@ export default function Stats({ }) {
     const isLoading = context.isLoading;
     const github = context.github;
     const max = context.max;
+    const totals = context.totals;
+    const teams = context.teams;
+
     const exercisesDB = context.exercisesDB;
-    console.log(exercisesDB)
     const setSelectStats = context.setSelectStats;
     const handleChangeStats = (event) => {
         setSelectStats(event.target.value);
@@ -56,17 +59,23 @@ export default function Stats({ }) {
     }
 
     function getColor(progress,tests) {
+        console.log(totals.teamMembers/teams.length)
+        console.log('totals.teamMembers/teams.length')
+
         if (selectStats == 'Commits') {
-            if (progress < 3) return 'error'
-            if (progress >= 3 && progress < 7) return 'warning'
+            if (progress < 2*(totals.teamMembers/teams.length)) return 'error'
+            if (progress >= 2*(totals.teamMembers/teams.length) && progress < 4*((totals.teamMembers/teams.length))) return 'warning'
             return 'success'
         } else {
             let succesffulTests = 0
+            console.log('workflow',progress)
             for (let tempWorkFlow in progress) {
-                const check = progress[tempWorkFlow].filter((item) => {
+                var check = progress[tempWorkFlow].filter((item) => {
                     return item.value.includes('success')
                 })
-                if (check.length > 0) succesffulTests += 1
+                check=[...new Set(check.map( (val)=>val.value[2]))]
+
+                if (check.length > 0) succesffulTests +=  check.length
 
             }
             if (tests == 0) return 'success'
@@ -153,7 +162,7 @@ export default function Stats({ }) {
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <CircularProgressWithLabel thickness={5} color={getColor(selectStats == 'Commits' ? column.commits : column.workflow , column.totalTests)}
-                                                    size="5em" value={selectStats == 'Commits' ? column.commits : column.workflow} totalTest={column.totalTests}/>
+                                                    size="7em" value={selectStats == 'Commits' ? column.commits : column.workflow} totalTest={column.totalTests}/>
                                             </TableCell>
                                         )
                                     })}

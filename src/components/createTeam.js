@@ -12,7 +12,6 @@ import { contextOptions } from '../../pages/class/[name]';
 import showNotification from '../../Lib/notification'
 
 
-//TODO 1 Να μην πατιέται το κουμπί αρχικοποίηση εάν δεν έχει οριστεί όνομα άσκησης
 
 const Input = styled('input')({
     display: 'none',
@@ -27,8 +26,10 @@ export default function CreateTeam({ }) {
     const supervisor = context.supervisor;
     const organization = context.organization;
     const teams = context.teams;
+    console.log(teams)
     const setTeams = context.setTeams;
-
+    const users = context.users;
+    const [activeUser, setActiveUser] = useState(supervisor.githubname);
 
 
     const handlePopoverOpen = (event) => {
@@ -41,6 +42,9 @@ export default function CreateTeam({ }) {
 
     const open = Boolean(anchorEl);
 
+    const handleUserChange = (event) => {
+        setActiveUser(event.target.value);
+    };
 
 
     const handleTeamName = (event) => {
@@ -59,7 +63,7 @@ export default function CreateTeam({ }) {
             const formData = new FormData();
             formData.append(
                 'formData', //key
-                JSON.stringify({ team: teamName, supervisor: supervisor, organization: organization }) //value
+                JSON.stringify({ team: teamName, supervisor: activeUser, organization: organization }) //value
             );
             for (let i = 0; i < csvfiles.csv.length; i++) {
                 formData.append("file", csvfiles.csv[i]);
@@ -75,7 +79,7 @@ export default function CreateTeam({ }) {
             const data = await res.json();
             console.log(data)
             if (data.success) {
-                setTeams([...teams,{teamName:teamName ,supervisor: supervisor }])
+                setTeams([...teams, { teamName: teamName, supervisor: activeUser }])
                 showNotification(
                     'success',
                     'Επιτυχής αρχικοποίηση ομάδας',
@@ -136,6 +140,43 @@ export default function CreateTeam({ }) {
                                     </Box>
                                 </TableCell>
                             </TableRow>
+
+                            <TableRow>
+                                <TableCell>
+                                    <Box >
+                                        <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Επιβλέποντας ομάδας</p>
+
+                                    </Box>
+                                </TableCell>
+                                <TableCell align='right'>
+
+                                    <Box >
+                                        <FormControl sx={{ m: 1, minWidth: 220 }}>
+                                            <InputLabel id="demo-simple-select-helper-label">Όνομα άσκησης</InputLabel>
+                                            <Select
+                                                style={{ minWidth: '220px' }}
+                                                labelId="demo-simple-select-label"
+                                                id="demo-simple-select"
+                                                value={activeUser}
+                                                label="Όνομα άσκησης"
+                                                onChange={handleUserChange}
+                                            >
+
+                                                {users && users.map((user) => {
+                                                    return (<MenuItem value={user.githubname} key={user.id}> {user.first_name} {user.last_name} </MenuItem>)
+                                                })}
+
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+                                </TableCell>
+                            </TableRow>
+
+
+
+
+
+
                             <TableRow>
                                 <TableCell>
                                     <Box style={{ display: 'flex', verticalAlign: 'middle' }} >

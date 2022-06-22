@@ -32,9 +32,7 @@ export default function ClassHome({ orgs, cookies, supervisorOrgs }) {
         setSecret(event.target.value);
     };
 
-    function createData(name) {
-        return { name };
-    }
+  
 
 
     // Ανακατεύθηνση του χρήστη στον οργανισμό του. 
@@ -63,9 +61,6 @@ export default function ClassHome({ orgs, cookies, supervisorOrgs }) {
                 secret: secret
             })
         });
-
-
-
         const data = await res.json();
         if (data.success) {
             showNotification(
@@ -162,7 +157,7 @@ export default function ClassHome({ orgs, cookies, supervisorOrgs }) {
                         </Table>
                         <div style={{ margin: '2%' }}>
                             <Button type="submit" variant="contained" color="primary" onClick={createNewClass}>
-                                Δημιουργια νεου μαθηματοσ
+                                Δημιουργια  εργαστηριου
                             </Button>
                         </div>
                     </TableContainer>

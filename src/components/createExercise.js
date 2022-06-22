@@ -15,7 +15,6 @@ import { contextOptions } from '../../pages/class/[name]';
 import showNotification from '../../Lib/notification'
 
 
-//TODO 1 Να μην πατιέται το κουμπί αρχικοποίηση εάν δεν έχει οριστεί όνομα άσκησης
 
 const Input = styled('input')({
     display: 'none',
@@ -351,7 +350,7 @@ export default function CreateExercise({ classname }) {
                                 <TableCell align="right" component="th" scope="row">
                                     <LocalizationProvider dateAdapter={AdapterMoment}>
                                         <DatePicker
-                                            label="Basic example"
+                                            label="Προθεσμία άσκησης"
                                             value={value}
                                             disablePast
                                             onChange={(newValue) => {

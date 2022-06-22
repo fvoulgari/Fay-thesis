@@ -14,8 +14,6 @@ import { Popconfirm } from 'antd';
 import { DataGrid } from '@mui/x-data-grid';
 
 
-//TODO 1 Να μην πατιέται το κουμπί αρχικοποίηση εάν δεν έχει οριστεί όνομα άσκησης
-
 const Input = styled('input')({
     display: 'none',
 });
@@ -58,6 +56,8 @@ export default function EditTeam() {
     const organization = context.organization;
     const teams = context.teams
     const setTeams = context.setTeams
+    const users = context.users;
+    const [activeUser, setActiveUser] = useState('');
 
 
     
@@ -303,6 +303,7 @@ export default function EditTeam() {
     useEffect(() => {
         if (editedTeam) {
             handleInfoChange()
+            setActiveUser(teams.filter( (team)=>team.teamName==editedTeam)[0].supervisor)
         }
     }, [editedTeam])
 
@@ -315,7 +316,7 @@ export default function EditTeam() {
             const formData = new FormData();
             formData.append(
                 'formData', //key
-                JSON.stringify({ team: editedTeam, supervisor: supervisor, organization: organization }) //value
+                JSON.stringify({ team: editedTeam, supervisor: activeUser, organization: organization }) //value
             );
             for (let i = 0; i < csvfiles.csv.length; i++) {
                 formData.append("file", csvfiles.csv[i]);
@@ -355,13 +356,35 @@ export default function EditTeam() {
                     'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
                 );
             }
-        } else {
-            showNotification(
-                'error',
-                'Ανέπιτυχής αρχικοποίηση',
-                'Δεν συμπληρώσατε όλα τα πεδία.'
-            );
-        }
+        }else {
+            const res = await fetch('/api/updateTeamSupervisor', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    team: editedTeam,
+                    supervisor: activeUser,
+                    organization: organization
+                })
+            });
+    
+            const data = await res.json()
+            if (data.success) {
+                showNotification(
+                    'success',
+                    'Επιτυχής ανανέωση ομάδας',
+                );
+            } else {
+                showNotification(
+                    'error',
+                    'Ανεπιτυχής ανανέωση ομάδας',
+                    'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
+                );
+            }
+
+        } 
 
     }
 
@@ -381,7 +404,9 @@ export default function EditTeam() {
     };
 
 
-
+    const handleUserChange = (event) => {
+        setActiveUser(event.target.value);
+    };
 
 
 
@@ -422,6 +447,37 @@ export default function EditTeam() {
                                     </Box>
                                 </TableCell>
                             </TableRow>
+                            { editedTeam && <TableRow>
+                                <TableCell>
+                                    <Box >
+                                        <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Υπεύθηνος ομάδας</p>
+
+                                    </Box>
+                                </TableCell>
+                                <TableCell align='right'>
+
+                                    <Box >
+                                        <FormControl sx={{ m: 1, minWidth: 220 }}>
+                                            <InputLabel id="demo-simple-select-helper-label">Όνομα άσκησης</InputLabel>
+                                            <Select
+                                                style={{ minWidth: '220px' }}
+                                                labelId="demo-simple-select-label"
+                                                id="demo-simple-select"
+                                                value={activeUser}
+                                                label="Όνομα άσκησης"
+                                                onChange={handleUserChange}
+                                            >
+
+                                                {users && users.map((user) => {
+                                                    return (<MenuItem value={user.githubname} key={user.id}> {user.first_name} {user.last_name} </MenuItem>)
+                                                })}
+
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+                                </TableCell>
+                            </TableRow>}
+
                             <TableRow>
                                 <TableCell>
                                     <Box style={{ display: 'flex', verticalAlign: 'middle' }} >
@@ -480,8 +536,8 @@ export default function EditTeam() {
                             <TableRow>
                                 <TableCell align='left'>
                                     <div style={{ width: '100%' }}>
-                                        <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="warning" onClick={initilizeTeam} >
-                                            Ανανέωση
+                                        <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="success" onClick={initilizeTeam} >
+                                            Ανανεωση
                                         </Button>
                                     </div>
                                 </TableCell>
@@ -584,10 +640,10 @@ export default function EditTeam() {
                             />
 
                         </Box>
-                        <Button onClick={() => { deleteRow(selectionModel) }} style={{ marginRight: '1%', marginLeft: '1%' }} variant="contained" color="error">
+                        <Button onClick={() => { deleteRow(selectionModel) }} style={{  margin: '1%'}} variant="contained" color="error">
                             Διαγραφη
                         </Button>
-                        <Button variant="contained" onClick={handleOpen}>
+                        <Button variant="contained" onClick={handleOpen} style={{  margin: '1%'}}>
                             Εισαγωγη
                         </Button>
                     </div>
