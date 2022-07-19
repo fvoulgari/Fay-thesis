@@ -123,14 +123,14 @@ export default function CreateClass({ supervisor }) {
             if (data.success) {
                 showNotification(
                     'success',
-                    'Επιτυχής αρχικοποιήση εργαστηρίου',
-                    'Μόλις προσθέσατε ένα νέο  εργαστήριο.'
+                    'Επιτυχής αρχικοποιήση μαθήματος',
+                    'Μόλις προσθέσατε ένα νέο μάθημα.'
                 );
                 router.push('/class/' + organization)
             } else {
                 showNotification(
                     'error',
-                    'Ανεπιτυχής αρχικοποιήση εργαστηρίου',
+                    'Ανεπιτυχής αρχικοποιήση μαθήματος',
                 );
             }
 
@@ -138,7 +138,7 @@ export default function CreateClass({ supervisor }) {
         } else {
             showNotification(
                 'warning',
-                'Ανεπιτυχής αρχικοποιήση εργαστηρίου',
+                'Ανεπιτυχής αρχικοποιήση μαθήματος',
                 'Δεν έχετε συμπληρώσει όλα τα πεδία.'
             );
         }
@@ -172,7 +172,7 @@ export default function CreateClass({ supervisor }) {
             <Container maxWidth="lg" style={{ display: 'flex', justifyContent: 'center', paddingTop: '1%', marginBottom: '2%', padding: '3%' }}>
 
                 <Card style={{ width: '100%', marginLeft: '2%' }}>
-                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}><h1 style={{ color: '#424242', margin: '2%' }}>Αρχικοποίηση Εργαστηρίου</h1></div>
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}><h1 style={{ color: '#424242', margin: '2%' }}>Αρχικοποίηση Μαθήματος</h1></div>
 
                     <TableContainer component={Paper}>
                         <Table aria-label="caption table">
@@ -180,14 +180,14 @@ export default function CreateClass({ supervisor }) {
 
                                 <StyledTableRow >
                                     <StyledTableCell component="th" scope="row">
-                                        <h4 style={{ fontWeight: 'bold' }}>Επιλογή Εργαστηρίου</h4>
+                                        <h4 style={{ fontWeight: 'bold' }}>Επιλογή μαθήματος</h4>
                                     </StyledTableCell>
                                     <StyledTableCell>
                                     </StyledTableCell>
                                     <StyledTableCell align="right" component="th" scope="row">
                                         {/* <TextField required style={{ height: ' 50px' }}  size="small" label="Ονομασία" variant="outlined" type="text" onChange={handleOrganization} /> */}
                                         <FormControl >
-                                            <InputLabel >Εργαστήριο</InputLabel>
+                                            <InputLabel >Μάθημα</InputLabel>
                                             <Select
                                                 style={{ width: '150px', marginRight: '5%', height: ' 50px' }}
                                                 value={organization}
@@ -221,7 +221,7 @@ export default function CreateClass({ supervisor }) {
                                 </StyledTableRow>
                                 <StyledTableRow sx={{ height: '200px' }}>
                                     <StyledTableCell component="th" scope="row">
-                                        <h4 style={{ fontWeight: 'bold' }}>Προσθήκη υπευθύνου </h4>
+                                        <h4 style={{ fontWeight: 'bold' }}>Προσθήκη υπεύθυνου </h4>
                                     </StyledTableCell>
                                     <StyledTableCell align="left" component="th" scope="row">
                                         <TextField style={{ width: '60%' }} value={email} label="Github Email" variant="outlined" type="text" onChange={handleName} />

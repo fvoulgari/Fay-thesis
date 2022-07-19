@@ -57,7 +57,6 @@ export default function CircularProgressWithLabel(props) {
         }
        
       }
-      console.log(succesffulTests)
       if(succesffulTests==0) return 2
       return succesffulTests/totalTest *100
    }

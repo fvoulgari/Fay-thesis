@@ -28,9 +28,7 @@ const style = {
 
 
 export default function HomeClass({ }) {
-    const onPanelChange = (value, mode) => {
-        console.log(value.format('YYYY-MM-DD'), mode);
-    };
+
 
     const context = useContext(contextOptions);
     const totals = context.totals;
@@ -82,7 +80,7 @@ export default function HomeClass({ }) {
                                 <TableRow>
 
                                     <TableCell >
-                                        <span style={{ fontWeight: 'bold', fontSize: '15px' }}> Πληροφορίες Εργαστηρίου </span>
+                                        <span style={{ fontWeight: 'bold', fontSize: '15px' }}> Πληροφορίες Μαθήματος </span>
                                     </TableCell>
                                     <TableCell align='center'>
 
@@ -150,7 +148,7 @@ export default function HomeClass({ }) {
                 </div>
 
                 <div >
-                    <Calendar dateCellRender={dateCellRender} onPanelChange={onPanelChange} />
+                    <Calendar dateCellRender={dateCellRender}  />
                 </div>
             </Card>
         </>

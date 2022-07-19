@@ -80,7 +80,7 @@ export async function deleteFile(organization, exercise, file) {
         repo: exercise,
         path: file.path
     })
-
+  
     //Χρησιμοποιώντας τις πληροφορίες από το  τελευταίο commit κάνω διαγραφή του φακέλου ακολουθώντας τις οδηγίες από το manual του github
     const req = await octokit.request('DELETE /repos/{owner}/{repo}/contents/{path}', {
         owner: result.rows[0].name,
@@ -90,7 +90,6 @@ export async function deleteFile(organization, exercise, file) {
         sha: file.sha
     }
     )
-    console.log('exercise' ,exercise)
 
       const team = await client.query(
         `
@@ -98,15 +97,13 @@ export async function deleteFile(organization, exercise, file) {
         `, [exercise])
     if (team.rows.length == 0) return false
 
-    console.log('team.rows[0].team_id' ,team.rows[0].team_id)
 
     const studentRows = await client.query(
         `
     Select * from team_member where team = $1
         `, [team.rows[0].team_id])
 
-    let students
-    console.log(studentRows.rows)
+    let students;
 
     if (studentRows.rows.length > 0) {
         students = studentRows.rows.map((student) => {
@@ -116,53 +113,53 @@ export async function deleteFile(organization, exercise, file) {
         //Για όλους τους μαθητές διαγράφουμε τα repositories  και τα  ξαναδημιουργούμε από την αρχή 
         for (let student of students) {
 
-            console.log('student' ,student)
+
+            const { error, stdout, stderr } = await util.promisify(exec)(`gh api -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${student}-${exercise}/commits  --jq ".[0].commit.tree.sha"
+            `);
+            if (error) {
+                console.log(`error: ${error.message}`);
+                return [];
+    
+            }
+            if (stderr) {
+                console.log(`stderr: ${stderr}`);
+                return [];
+            }
+    
+            const sha = stdout.split('\n')
+    
+    
+            const octokit = new Octokit({
+                auth: process.env.pat
+            })
+            
+            //Μέσω του github tree api φέρνουμε όλα τα αρχεία και πληροφορίες για αυτά.
+            const req = await octokit.request('GET /repos/{owner}/{repo}/git/trees/{tree_sha}?recursive=1', {
+                owner: result.rows[0].name,
+                repo: `${student}-${exercise}`,
+                tree_sha: sha[0]
+            })
+    
+
+            const shaArr= req.data.tree.filter( (temp)=>temp.path==file.path)
+
             const reqCommit = await octokit.request('GET /repos/{owner}/{repo}/commits', {
                 owner: result.rows[0].name,
                 repo: `${student}-${exercise}`,
                 path: file.path
             })
-        
+
             //Χρησιμοποιώντας τις πληροφορίες από το  τελευταίο commit κάνω διαγραφή του φακέλου ακολουθώντας τις οδηγίες από το manual του github
-            const req = await octokit.request('DELETE /repos/{owner}/{repo}/contents/{path}', {
+            await octokit.request('DELETE /repos/{owner}/{repo}/contents/{path}', {
                 owner: result.rows[0].name,
                 repo: `${student}-${exercise}`,
                 path: file.path,
                 message: reqCommit.data[0].commit.message,
-                sha: file.sha
-            })
+                sha: shaArr[0].sha
+            }
+            )
 
-            // const { errorDel, stdoutDel, stderrDel } = await util.promisify(exec)(` gh api  --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${student}-${exercise}`);
-            // if (errorDel) {
-            //     console.log(`error: ${errorDel.message}`);
-            //     return;
-
-            // }
-            // if (stderrDel) {
-            //     console.log(`stderr: ${stderrDel}`);
-            //     return;
-            // }
-
-            // const { error, stdout, stderr } = await util.promisify(exec)(`gh repo create ${result.rows[0].name}/${student}-${exercise} --private --template ${result.rows[0].name}/${exercise} `);
-            // if (error) {
-            //     console.log(`error: ${error.message}`);
-            //     return false;
-
-            // }
-            // if (stderr) {
-            //     console.log(`stderr: ${stderr}`);
-            //     return false;
-            // }
-            // const { errorInv, stdoutInv, stderrInv } = await util.promisify(exec)(`  gh api --method PUT -H "Accept: application/vnd.github.v3+json" /repos/${result.rows[0].name}/${exercise}/collaborators/${student}`);
-            // if (errorInv) {
-            //     console.log(`error: ${errorInv.message}`);
-            //     return false;
-
-            // }
-            // if (stderrInv) {
-            //     console.log(`stderr: ${stderrInv}`);
-            //     return false;
-            // }
+     
         }
 
 
@@ -174,6 +171,7 @@ export async function deleteFile(organization, exercise, file) {
 
     return null
 }catch(error){
+    console.log(error)
     return null
 }finally{
     if(client) client.release()
@@ -488,7 +486,7 @@ export async function getRepos(classname) {
     );
     if (result.rows.length > 0) {
         //Φέρνουμε όλα τα repository κράτωντας μόνο την πληροφορία για το αν είναι template καθώς και το όνομα τους.
-        const { error, stdout, stderr } = await util.promisify(exec)(`gh repo list ${result.rows[0].name} --json name,isTemplate`);
+        const { error, stdout, stderr } = await util.promisify(exec)(`gh repo list ${result.rows[0].name} --limit 10000 --json name,isTemplate`);
         if (error) {
             console.log(`error: ${error.message}`);
             return;
@@ -499,6 +497,7 @@ export async function getRepos(classname) {
             return;
         }
         const templates = JSON.parse(stdout);
+
 
         return templates;
     } else {
@@ -745,7 +744,6 @@ export async function deleteSupervisor(organization,email){
             `, [email])
 
             if(user.rows.length==0) return false
-            console.log('here')
             var { error, stdout, stderr } = await util.promisify(exec)(`  gh api  --method DELETE  -H "Accept: application/vnd.github.v3+json" /orgs/${result.rows[0].name}/members/${user.rows[0].githubname} `);
 
             if (error) {
@@ -803,8 +801,7 @@ export async function getTests(organization,exercise){
 export async function getWorkflowRuns(organization,exercise, member){
     
     try{
- 
-        var { error, stdout, stderr } = await util.promisify(exec)(`gh api -H "Accept: application/vnd.github.v3+json"  /repos/${organization}/${member}-${exercise}/actions/runs --jq '.workflow_runs.[] | [.conclusion , .name , .actor.login , .path] '`)
+        var { error, stdout, stderr } = await util.promisify(exec)(`gh api -H "Accept: application/vnd.github.v3+json"  /repos/${organization}/${member}-${exercise}/actions/runs?per_page=100 --jq '.workflow_runs.[] | [.conclusion , .name , .actor.login , .path] '`)
         if (error) {
             console.log(`error: ${error.message}`);
             return false;
@@ -895,11 +892,11 @@ export async function getStudentsInfo(organization, team,exercise){
         for(let i = 0; i<result.rows.length ; i++){
             const tempArr =  await getCommitsWithTime(result.rows[i].org,exercise, result.rows[i].member_github_name);
 
-
+            
             result.rows[i].commits =  tempArr.length
-            const temp=   JSON.parse( '{ "arr": ' + tempArr[0] +"}" )
-
-            result.rows[i].commitTime= moment(temp.arr[1]).format('YYYY-MM-DD')
+            const temp=  tempArr.length > 0 ? JSON.parse( '{ "arr": ' + tempArr[0] +"}" ): JSON.parse( '{ "arr": ' + '[ ]' +"}" ) 
+            console.log(temp)
+            result.rows[i].commitTime= temp.arr.length>0? moment(temp.arr[1]).format('YYYY-MM-DD'):''
             const tempWork= await getWorkflowRuns(result.rows[i].org, exercise, result.rows[i].member_github_name)
             let workflow; 
             if(tempWork.length>0){
@@ -967,7 +964,10 @@ export async function getCommitsWithTime(organization,exercise, member){
             arr.pop()
            
           // console.log(JSON.parse(stdout))
-          return arr.filter((name)=>name[0]!='teachingAssistant-uop')
+          console.log(arr)
+          return arr.filter((name)=>{
+            return !name.includes('teachingAssistant-uop')
+          })
         }catch(e){
             console.log(e)
             return []
@@ -977,7 +977,6 @@ export async function getCommitsWithTime(organization,exercise, member){
 export async function getCommits(organization,exercise, member){
 
     try{
-
     var { error, stdout, stderr } = await util.promisify(exec)(`gh api -H "Accept: application/vnd.github.v3+json" /repos/${organization}/${member}-${exercise}/commits --jq '.[].commit.author.name '`)
         if (error) {
             console.log(`error: ${error.message}`);
@@ -1061,7 +1060,6 @@ export async function getExercises(organization){
 
 export async function updateTeamSupervisor(team, supervisor, organization){
     let client;
-       console.log(team, supervisor, organization)
     try{
         client = await pool.connect();
         const result = await client.query(
@@ -1422,7 +1420,6 @@ export async function deleteExercise(organization, exercise) {
         students = studentRows.rows.map((student) => {
             return student.member_github_name
         })
-
         //Διαγράφουμε τα repos των φοιτητών από το github
         for (let student of students) {
 
@@ -1485,10 +1482,10 @@ export async function reInitializeTeam(team, supervisor, organization, file) {
         //Διαγράφουμε τα παλιά μέλη από την ομάδα
         const update = await client.query(
             `
-                update team set team_supervisor=$1 where  team_id = $1 
+                update team set team_supervisor=$1 where  team_id = $2
                 returning *
    `,
-            [teamRows.rows[0].team_id]
+            [supervisor,teamRows.rows[0].team_id]
 
         );
         const result = await client.query(
@@ -1499,6 +1496,7 @@ export async function reInitializeTeam(team, supervisor, organization, file) {
             [teamRows.rows[0].team_id]
 
         );
+
         for (let i = 1; i < records.length; i++) {
             //Βάζουμε τα καινούργια  μέλη στην ομάδα
 
@@ -1531,7 +1529,6 @@ export async function initializeTeam(team, supervisor, organization, file) {
 
 
         client = await pool.connect();
-        console.log(team, supervisor, organization)
         await util.promisify(fs.rename)(file.file.filepath, '/tmp' + '/' + file.file.originalFilename);
         const content = await util.promisify(fs.readFile)("/tmp/" + file.file.originalFilename);
         const records = await util.promisify(parse)(content);
@@ -1680,7 +1677,6 @@ export async function getTotals(name) {
             if(max<row.num) max=row.num
         }
     }
-        console.log({ teamMembers: teamMembers.rows[0].num, exercises: max})
    
         return { teamMembers: teamMembers.rows[0].num, exercises: max}
 
@@ -1803,10 +1799,8 @@ export async function addTeamRow(editedTeam, githubInsert, amInsert, firstNameIn
           Select * from team where team_name = $1 and organization = $2
            
             `, [editedTeam,lab])
-            console.log(team.rows.length==0)
 
         if(team.rows.length==0) return false
-        console.log(team.rows[0].team_id)
         //Κάνουμε insert στην βάση της  πληροφορίες του νέου μέλους
         const result = await client.query(
             `
@@ -1830,7 +1824,7 @@ export async function addTeamRow(editedTeam, githubInsert, amInsert, firstNameIn
                     o.secret as secret  ,
                     o."year" as year,
                     o.lab_name as labName
-                from exercise e inner join organizations o on o.githubname = e.organization  where e.team = $1
+                from exercise e inner join organization o on o.githubname = e.organization  where e.team = $1
             `, [team.rows[0].team_id])
 
         //Για κάθε άσκηση δημιουργούμε repo για τον νέο φοιτητή και τον κάνουμε invite μέχω του github CLI
@@ -1925,7 +1919,6 @@ export async function editTeamRow(team,lab ) {
             returning *
             `, [team.id, teamRows.rows[0].team_id, team.github, team.am, team.firstname, team.lastname])
 
-        console.log(result)
         if (result.rows == 0) return false
 
         
@@ -2483,14 +2476,12 @@ export async function updateAllExercise(organization, exercise, files) {
                         return student.member_github_name
                     })
                 }
-                console.log('students', students)
         //Ελέγχουμε αν υπάρχουν φάκελοι και αν υπάρχει το organization
         if (files && result.rows.length > 0) {
             if (files.file) {
                 //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
                 if (Array.isArray(files.file)) {
                     for (let file of files.file) {
-                        console.log('file', file.filepath)
                         await util.promisify(fs.rename)(file.filepath, `/tmp/` + file.originalFilename);
                         const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + file.originalFilename)).toString()
                         const { errorRM, stdoutRM, stderrRM } = await util.promisify(exec)(`rm -rdf /tmp/${file.originalFilename}`);
@@ -2541,7 +2532,6 @@ export async function updateAllExercise(organization, exercise, files) {
                     }
                 }
                 else {
-                    console.log('file', files.file.filepath)
 
                     await util.promisify(fs.rename)(files.file.filepath, `/tmp/` + files.file.originalFilename);
                     const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + files.file.originalFilename)).toString()
@@ -2596,7 +2586,6 @@ export async function updateAllExercise(organization, exercise, files) {
                 //Έλεγχος για το αν υπάρχουν πολλοί φάκελοι ή μόνο ένας
                 if (Array.isArray(files.testFile)) {
                     for (let file of files.testFile) {
-                        console.log('testfile' , file.filepath)
 
                         await util.promisify(fs.rename)(file.filepath, `/tmp/` + file.originalFilename);
                         const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + file.originalFilename)).toString()
@@ -2646,7 +2635,6 @@ export async function updateAllExercise(organization, exercise, files) {
                     }
                 }
                 else {
-                    console.log('testfile' , files.testFile.filepat)
     
                     await util.promisify(fs.rename)(files.testFile.filepath, `/tmp/` + files.testFile.originalFilename);
                     const originalFile = await (await util.promisify(fs.readFile)(`/tmp/` + files.testFile.originalFilename)).toString()

@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import _ from 'lodash';
 import {
-     Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Button, Select, MenuItem, FormControl, InputLabel, Paper, Popover, Modal
+    Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Button, Select, MenuItem, FormControl, InputLabel, Paper, Popover, Modal
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -32,7 +32,7 @@ const columns = [
     { field: 'id', minWidth: 20, flex: 1 },
     { field: 'team', flex: 1 },
     { field: 'lab', minWidth: 50, flex: 1 },
-    { field: 'github', minWidth: 150, flex: 1},
+    { field: 'github', minWidth: 150, flex: 1 },
     { field: 'am', minWidth: 50, flex: 1, editable: true },
     { field: 'firstname', minWidth: 80, flex: 1, editable: true },
     { field: 'lastname', minWidth: 80, flex: 1, editable: true },
@@ -60,7 +60,7 @@ export default function EditTeam() {
     const [activeUser, setActiveUser] = useState('');
 
 
-    
+
     const [selectionModel, setSelectionModel] = useState([]);
     const [openModal, setOpenModal] = useState(false);
 
@@ -137,7 +137,6 @@ export default function EditTeam() {
     //Καλούμε ένα api για να διαγράψουμε έναν φοιτητή απο την ομάδα
 
     const deleteRow = async (id) => {
-        console.log(id)
         const res = await fetch('/api/deleteTeamRows', {
             method: 'POST',
             headers: {
@@ -169,7 +168,7 @@ export default function EditTeam() {
     //Καλούμε ένα api για να κάνουμε delete την ομάδα 
 
     const deleteTeam = async () => {
-        
+
         if (editedTeam) {
 
 
@@ -191,7 +190,7 @@ export default function EditTeam() {
                     'success',
                     'Επιτυχής διαγραφή ομάδας ομάδας',
                 );
-                setTeams([...teams].filter((team)=>team.teamName!=editedTeam))
+                setTeams([...teams].filter((team) => team.teamName != editedTeam))
                 setEditedTeam(null)
 
             } else {
@@ -201,7 +200,7 @@ export default function EditTeam() {
                     'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
                 );
             }
-        }else{
+        } else {
             showNotification(
                 'warning',
                 'Ανεπιτυχής διαγραφή ομάδας',
@@ -235,7 +234,6 @@ export default function EditTeam() {
         setFirstNameInsert('')
         setLastNameInsert('')
         if (data.success) {
-            console.log(data)
             showNotification(
                 'success',
                 'Επιτυχής εισαγωγή εγγραφής στην ομάδας',
@@ -259,7 +257,7 @@ export default function EditTeam() {
         }
 
     }
-    
+
     const handleInfoChange = async () => {
         //Φέρνουμε τα στοιχεία για  τις ομάδες από την βάση
         const res = await fetch('/api/getTeamInfo', {
@@ -282,7 +280,7 @@ export default function EditTeam() {
                         return {
                             id: member.team_member_id,
                             team: member.team_name,
-                            lab: member.lesson,
+                            lab: member.organization,
                             github: member.member_github_name,
                             am: member.am,
                             firstname: member.first_name,
@@ -303,7 +301,7 @@ export default function EditTeam() {
     useEffect(() => {
         if (editedTeam) {
             handleInfoChange()
-            setActiveUser(teams.filter( (team)=>team.teamName==editedTeam)[0].supervisor)
+            setActiveUser(teams.filter((team) => team.teamName == editedTeam)[0].supervisor)
         }
     }, [editedTeam])
 
@@ -356,7 +354,7 @@ export default function EditTeam() {
                     'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
                 );
             }
-        }else {
+        } else {
             const res = await fetch('/api/updateTeamSupervisor', {
                 method: 'POST',
                 headers: {
@@ -369,7 +367,7 @@ export default function EditTeam() {
                     organization: organization
                 })
             });
-    
+
             const data = await res.json()
             if (data.success) {
                 showNotification(
@@ -384,7 +382,7 @@ export default function EditTeam() {
                 );
             }
 
-        } 
+        }
 
     }
 
@@ -447,10 +445,10 @@ export default function EditTeam() {
                                     </Box>
                                 </TableCell>
                             </TableRow>
-                            { editedTeam && <TableRow>
+                            {editedTeam && <TableRow>
                                 <TableCell>
                                     <Box >
-                                        <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Υπεύθηνος ομάδας</p>
+                                        <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Υπεύθυνος ομάδας</p>
 
                                     </Box>
                                 </TableCell>
@@ -527,24 +525,11 @@ export default function EditTeam() {
                                             <label htmlFor="contained-csv-button-file">
                                                 <Input id="contained-csv-button-file" accept=".csv" type="file" onChange={handleCsvFileChange} />
                                                 <Button type="submit" color="primary" variant="contained" component="span" style={{ minWidth: 220 }}>
-                                                    CSV μαθητων
+                                                    CSV φοιτητών
                                                 </Button>
                                             </label>
                                         </div>                                   </Box>
                                 </TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell align='left'>
-                                    <div style={{ width: '100%' }}>
-                                        <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="success" onClick={initilizeTeam} >
-                                            Ανανεωση
-                                        </Button>
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-
-                                </TableCell>
-
                             </TableRow>
                             <TableRow>
                                 <TableCell align='left'>
@@ -556,9 +541,24 @@ export default function EditTeam() {
 
                                     >
                                         <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="error" >
-                                            διαγραφη
+                                            διαγραφη ομαδασ
                                         </Button>
                                     </Popconfirm>
+
+
+                                </TableCell>
+                                <TableCell align="right">
+                                    <div style={{ width: '100%' }}>
+                                        <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="success" onClick={initilizeTeam} >
+                                            Ανανεωση ομαδασ
+                                        </Button>
+                                    </div>
+                                </TableCell>
+
+                            </TableRow>
+                            <TableRow>
+                                <TableCell align='left'>
+
                                 </TableCell>
                                 <TableCell>
 
@@ -608,7 +608,7 @@ export default function EditTeam() {
                                 </Table>
 
                             </TableContainer>
-                            <div style={{ marginTop: '6%', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                            <div style={{ marginTop: '10%', width: '100%', display: 'flex', justifyContent: 'center' }}>
                                 <Button style={{ backgroundColor: "#1976d2" }} variant="contained" onClick={() => {
                                     addTeamRow();
                                     handleClose();
@@ -622,7 +622,7 @@ export default function EditTeam() {
                     </Modal>
                     <div style={{ width: '100%' }}>
 
-                        <Box sx={{ height: '50vh', bgcolor: 'background.paper' }}>
+                        <Box sx={{ height: '30vh', bgcolor: 'background.paper' }}>
                             <DataGrid onRowEditStop={(params, event) => {
                                 handleEditRow(params.row)
                             }}
@@ -640,12 +640,22 @@ export default function EditTeam() {
                             />
 
                         </Box>
-                        <Button onClick={() => { deleteRow(selectionModel) }} style={{  margin: '1%'}} variant="contained" color="error">
-                            Διαγραφη
+                        <Button variant="contained" onClick={handleOpen} style={{ margin: '1%' }}>
+                            Εισαγωγη φοιτητη
                         </Button>
-                        <Button variant="contained" onClick={handleOpen} style={{  margin: '1%'}}>
-                            Εισαγωγη
-                        </Button>
+                        <Popconfirm
+                            title={'Είστε σίγουρος ότι θέλετε να διαγράψετε τον φοιτητή'}
+                            onConfirm={() => { deleteRow(selectionModel) }}
+                            okText={'Ναι'}
+                            cancelText={'Οχι'}
+
+                        >
+                            <Button  style={{ margin: '2%' }} variant="contained" color="error">
+                                Διαγραφη φοιτητη
+                            </Button>
+                        </Popconfirm>
+
+                        
                     </div>
 
                 </>}

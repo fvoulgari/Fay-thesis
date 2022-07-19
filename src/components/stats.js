@@ -47,7 +47,8 @@ export default function Stats({ }) {
     const max = context.max;
     const totals = context.totals;
     const teams = context.teams;
-
+    const supervisor = context.supervisor
+    console.log(supervisor)
     const exercisesDB = context.exercisesDB;
     const setSelectStats = context.setSelectStats;
     const handleChangeStats = (event) => {
@@ -59,8 +60,7 @@ export default function Stats({ }) {
     }
 
     function getColor(progress,tests) {
-        console.log(totals.teamMembers/teams.length)
-        console.log('totals.teamMembers/teams.length')
+    
 
         if (selectStats == 'Commits') {
             if (progress < 2*(totals.teamMembers/teams.length)) return 'error'
@@ -68,7 +68,6 @@ export default function Stats({ }) {
             return 'success'
         } else {
             let succesffulTests = 0
-            console.log('workflow',progress)
             for (let tempWorkFlow in progress) {
                 var check = progress[tempWorkFlow].filter((item) => {
                     return item.value.includes('success')
@@ -141,24 +140,20 @@ export default function Stats({ }) {
                         <TableBody>
                             {selectStats  && exercisesDB && exercisesDB.map((row) => (
                                 <TableRow key={row.team}>
-                                    {console.log(row)
                                     
-                                    
-                                    }
-                                    {console.log('here')}
+                                
                                     <StyledTableCell scope="row">
                                         <p style={{ fontWeight: 'bold', fontSize: '17px', marginBottom: '5%' }}>{row.team}</p>
-                                        <p style={{ color: `${row.supervisor == 'fvoulgari' ? 'blue' : 'black'}` }}>{row.supervisor == 'fvoulgari' ? 'H ομάδα μου' : row.supervisor}</p>
+                                        <p style={{ color: `${row.supervisor == supervisor.githubname ? 'blue' : 'black'}` }}>{row.supervisor == supervisor.githubname ? 'H ομάδα μου' : row.supervisor}</p>
                                     </StyledTableCell>
                                     {row.exercises.map((column, index) => {
-                                        console.log('column', column)
                                         //Μέσα στο CingularProgess περνάμε το thicknessν, το χρώμα που θέλουμε με την getColor, το size και το progress 
                                       
                                         return (
                                             <TableCell
                                                 key={`${column.exercise_id}`}
                                                 //Όταν κάνουμε click σε ένα από τα cell καλούμε την HandleCellClick με παραμέτρους τον οργανισμό, την ομάδα, και την άσκηση
-                                                onClick={() => { console.log(row); handleCellClick(organization, row.team, column.name) }}
+                                                onClick={() => {  handleCellClick(organization, row.team, column.name) }}
                                                 style={{ cursor: 'pointer' }}
                                             >
                                                 <CircularProgressWithLabel thickness={5} color={getColor(selectStats == 'Commits' ? column.commits : column.workflow , column.totalTests)}

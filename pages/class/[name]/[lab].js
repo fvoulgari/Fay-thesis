@@ -68,14 +68,14 @@ export default function Class({ name, team, lab, students }) {
     const router = useRouter();
 
     const arr = []
-    for (let i = 0; i <= 10; i += 0.1) {
+    for (let i = 0; i <= 10; i += 0.5) {
         arr.push(Math.round(i * 10) / 10
         )
     }
     const [grade, setGrade] = useState({ students: students.map((student) => student.grade) })
     const [comment, setComment] = useState({ comments: students.map((student) => student.comment) })
 
-    const handleComment = (event,index) => {
+    const handleComment = (event, index) => {
         setComment((prevState) => {
             var newState = [...prevState.comments]
             newState[index] = event.target.value
@@ -92,11 +92,11 @@ export default function Class({ name, team, lab, students }) {
         })
     }
 
-       
+
     //Καλούμε api για να κάνουμε update στα σχόλια και την βαθμολογία του εκάστοτε φοιτητή
 
-    const handleSaveGrade = async (grade, member,index) => {
-        if(typeof grade == 'number'){
+    const handleSaveGrade = async (grade, member, index) => {
+        if (typeof grade == 'number') {
             const res = await fetch('/api/saveGrade', {
                 method: 'POST',
                 headers: {
@@ -111,7 +111,7 @@ export default function Class({ name, team, lab, students }) {
                     comment: comment.comments[index]
                 })
             });
-            const data = await res.json( )
+            const data = await res.json()
             if (data.success) {
                 showNotification(
                     'success',
@@ -123,13 +123,13 @@ export default function Class({ name, team, lab, students }) {
                     'Ανεπιτυχής εγγραφή πληροφοριών',
                 );
             }
-        }else{
+        } else {
             showNotification(
                 'warning',
                 'Παρακαλώ συμπληρώστε  βαθμολογία πριν την αποθήκευση ',
             );
         }
-      
+
 
 
     };
@@ -147,36 +147,37 @@ export default function Class({ name, team, lab, students }) {
                 team: team,
             })
         }).then(res => {
-			return res.blob();
-		}).then(blob => {
-			const href = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.download ='Content-lab.csv';
-			a.href = href;
-            a.type= "text/plain;charset=utf-8"
-			a.click();
-		});
+            return res.blob();
+        }).then(blob => {
+            const href = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = 'Content-lab.csv';
+            a.href = href;
+            a.type = "text/plain;charset=utf-8"
+            a.click();
+        });
 
     };
 
     //Καλούμε api για να γίνει export to similarity check
 
     const similarityExport = async () => {
-        const data= fetch('/api/similarityExport', {
+        const data = fetch('/api/similarityExport', {
             method: 'GET'
-        }).then(res => {
-			return res.blob();
-		}).then(blob => {
-			const href = window.URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.download ='similarity.html';
-			a.href = href;
-            a.type= "text/plain;charset=utf-8"
-			a.click();
+        }).then(async (res) => {
+            var blob = new Blob([await res.blob()], { type: "text/html" });
+            var url = window.URL.createObjectURL(blob, { oneTimeOnly: true });
 
-		});
+            var anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.target = '_blank';
+
+            anchor.click();
+            //window.open(href)
+        })
 
     };
+
 
     const handleText = (workflow) => {
         var succesffulTests = 0;
@@ -272,13 +273,13 @@ export default function Class({ name, team, lab, students }) {
                     </div>
                     <Card style={{ minWidth: '72vw', marginLeft: '2%' }}>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '2%', width: '100%', float: 'right' }}>
-                            
-                            
+
+
                             <Button style={{ minWidth: 200 }} onClick={csvExport} type="submit" variant="contained" color="success" >
                                 Εξαγωγη αρχειου CSV
                             </Button>
                         </div>
-                      
+
 
                         <TableContainer component={Paper}>
                             <Table sx={{ minWidth: '70vw' }} aria-label="caption table">
@@ -286,6 +287,9 @@ export default function Class({ name, team, lab, students }) {
                                     <TableRow>
                                         <TableCell align='center'>
                                             <span style={{ fontWeight: 'bold' }}>  Όνομα</span>
+                                        </TableCell>
+                                        <TableCell align='center'>
+                                            <span style={{ fontWeight: 'bold' }}>  Προβολή υποβολής</span>
                                         </TableCell>
                                         <TableCell align='center'>
                                             <span style={{ fontWeight: 'bold' }}>  Commits</span>
@@ -314,48 +318,54 @@ export default function Class({ name, team, lab, students }) {
                                         <TableRow key={row.team_member_id}>
                                             <StyledTableCell scope="row" style={{ maxWidth: '200px' }} >
                                                 <List dense={true} style={{ maxWidth: '200px' }}>
-                                                    <ListItem
-                                                        secondaryAction={
-                                                            <a href={`https://github.com/${row.org}/${row.member_github_name}-${row.name}/`} target="_blank" >
-                                                                <GitHubIcon fontSize='medium' />
-                                                            </a>
-                                                        }
-                                                    >
+                                                    <ListItem>
                                                         <ListItemText
-                                                            primary={row.first_name + ' ' + row.last_name} style={{textAlign: 'center'}}
+                                                            primary={row.first_name + ' ' + row.last_name} style={{ textAlign: 'center' }}
                                                         />
                                                     </ListItem>
                                                 </List>
 
                                             </StyledTableCell>
+                                            <StyledTableCell align="center" scope="row" style={{ maxWidth: '200px' }} >
+
+                                                <a href={`https://github.com/${row.org}/${row.member_github_name}-${row.name}/`} target="_blank" >
+                                                    <GitHubIcon fontSize='large' />
+                                                </a>
+
+
+
+                                            </StyledTableCell>
+
 
                                             <TableCell key={row.commits}>
                                                 <span style={{ width: '100%', fontSize: 15, fontWeight: 'bold', display: 'flex', justifyContent: 'center' }}>{row.commits}</span>
                                             </TableCell>
                                             <TableCell key={row.commits + row.team_member_id}>
                                                 <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                                                <List dense={true} style={{ maxWidth: '200px' }}>
-                                                { Object.keys(row.workflow).map((key)=>{ console.log(row.workflow); console.log([...row.workflow[key].map( (work)=>work.value[0])]); return <>
-                                                    <ListItem
-                                                        secondaryAction={
-                                                            <>
-                                                                {[...row.workflow[key].map( (work)=>work.value[0])].includes('success')? <CheckBoxRoundedIcon color="success" fontSize='medium'/>: <ReportGmailerrorredRoundedIcon color="error" fontSize='medium'/>}
+                                                    <List dense={true} style={{ maxWidth: '200px' }}>
+                                                        {Object.keys(row.workflow).map((key) => {
+                                                            return <>
+                                                                <ListItem
+                                                                    secondaryAction={
+                                                                        <>
+                                                                            {[...row.workflow[key].map((work) => work.value[0])].includes('success') ? <CheckBoxRoundedIcon color="success" fontSize='medium' /> : <ReportGmailerrorredRoundedIcon color="error" fontSize='medium' />}
+
+                                                                        </>
+
+
+                                                                    }
+                                                                >
+                                                                    <ListItemText
+                                                                        primary={row.workflow[key][0].value[1]} style={{ fontWeight: 'bold' }}
+                                                                    />
+                                                                </ListItem>
+
 
                                                             </>
-                                                            
-                                                        
-                                                        }
-                                                    >
-                                                        <ListItemText
-                                                            primary={row.workflow[key][0].value[1]} style={{fontWeight: 'bold'}}
-                                                        />
-                                                    </ListItem>
-                                                
-                                                
-                                                </>}) } 
-                                                   
-                                                </List>
-{/* 
+                                                        })}
+
+                                                    </List>
+                                                    {/* 
                                                     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
                                                         <CircularProgress
                                                             variant="determinate"
@@ -383,7 +393,9 @@ export default function Class({ name, team, lab, students }) {
                                                 </div>
                                             </TableCell>
                                             <TableCell key={row.commitTime}>
-                                                <span style={{ width: '100%', display: 'flex', justifyContent: 'center', color: moment(row.commitTime).isAfter(moment(row.end_date)) ? 'red' : 'black' }}>{moment(row.commitTime).isAfter(moment(row.end_date, '')) ? <PriorityHighIcon fontSize="small" color="error" /> : ''} {row.commitTime}  </span>
+                                                {console.log(row.commitTime)}
+                                                <span style={{ width: '100%', display: 'flex', justifyContent: 'center', color: row.commitTime != '-' ? moment(row.commitTime).isAfter(moment(row.end_date)) ? 'red' : 'black' : 'black' }}>
+                                                    {moment(row.commitTime).isAfter(moment(row.end_date, '')) ? <PriorityHighIcon fontSize="small" color="error" /> : ''} {row.commitTime ? row.commitTime : '---'}  </span>
                                             </TableCell>
                                             <TableCell key={row.commitTime + 'id'}>
                                                 <div style={{ width: '100%' }}>
@@ -407,39 +419,45 @@ export default function Class({ name, team, lab, students }) {
                                                         </Select>
 
                                                     </FormControl>
-                                                 
+
 
                                                 </div>
                                             </TableCell>
 
                                             <TableCell key={row.openIssues}>
-                                                <TextField value={comment.comments[index]} label="Σχόλιο" variant="outlined" type="text" onChange={ (event)=>handleComment(event,index)} />
+                                                <TextField value={comment.comments[index]} label="Σχόλιο" variant="outlined" type="text" onChange={(event) => handleComment(event, index)} />
                                             </TableCell>
                                             <TableCell>
-                                                <span style={{ fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', textAlign:'center'}}> {row.averageGrade.length > 0 ? _.mean(row.averageGrade.map((grade) => grade.grade).filter((item) => {
+                                                <div style={{ fontWeight: 'bold', minWidth: '150px'}}>
+                                               
+                                                <span style={{ fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', textAlign: 'center' }}> {row.averageGrade.length > 0 ? _.mean(row.averageGrade.map((grade) => grade.grade).filter((item) => {
                                                     if (item) return true
                                                     return false
-                                                })) : ''}  {row.averageGrade.length > 0 ? `(${row.averageGrade.map((grade) => grade.grade).filter((item) => {
+                                                })) : ''} </span>
+                                                   <span style={{ fontWeight: 'bold', width: '100%', display: 'flex', justifyContent: 'center', textAlign: 'center' }}>
+                                                   {row.averageGrade.length > 0 ? `(${row.averageGrade.map((grade) => grade.grade).filter((item) => {
                                                     if (item) return true
                                                     return false
-                                                }).length} / ${row.averageGrade.length}  Ασκήσεις)` : 'Δεν υπάρχουν βαθμολογημένες ασκήσεις'}</span>
+                                                }).length} / ${row.averageGrade.length}  Ασκήσεις)` : 'Δεν υπάρχουν βαθμολογημένες ασκήσεις'}
+                                                 </span>
+                                                 </div>
                                             </TableCell>
-                                                <TableCell>
+                                            <TableCell>
                                                 <Popconfirm
-                                                        title={'Είστε σίγουρος ότι θέλετε να αλλάξετε τις πληροφορίες του φοιτητή'}
-                                                        onConfirm={() => {
-                                                            handleSaveGrade(grade.students[index], row.member_github_name,index)
-                                                        }}
-                                                        okText={'Ναι'}
-                                                        cancelText={'Οχι'}
+                                                    title={'Είστε σίγουρος ότι θέλετε να αλλάξετε τις πληροφορίες του φοιτητή'}
+                                                    onConfirm={() => {
+                                                        handleSaveGrade(grade.students[index], row.member_github_name, index)
+                                                    }}
+                                                    okText={'Ναι'}
+                                                    cancelText={'Οχι'}
 
-                                                    >
-                                                        <IconButton style={{ marginTop: '4%' }} >
-                                                            <SaveIcon color='warning' fontSize="large" > </SaveIcon>
+                                                >
+                                                    <IconButton style={{ marginTop: '4%' }} >
+                                                        <SaveIcon color='warning' fontSize="large" > </SaveIcon>
 
-                                                        </IconButton>
-                                                    </Popconfirm>
-                                                </TableCell>
+                                                    </IconButton>
+                                                </Popconfirm>
+                                            </TableCell>
 
                                         </TableRow>
                                     ))}
@@ -447,12 +465,12 @@ export default function Class({ name, team, lab, students }) {
                                 </TableBody>
                             </Table>
                             <div style={{ margin: '2%', width: '100%' }}>
-                            
-                            
-                            <Button style={{ minWidth: 200 }} onClick={similarityExport} type="submit" variant="contained" color="error" >
-                                ελεγχος ομοιοτητας 
-                            </Button>
-                        </div>
+
+
+                                <Button style={{ minWidth: 200 }} onClick={similarityExport} type="submit" variant="contained" color="error" >
+                                    ελεγχος ομοιοτητας
+                                </Button>
+                            </div>
 
                         </TableContainer>
                     </Card>

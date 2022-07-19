@@ -219,7 +219,7 @@ export default function Class({ exerciseInfo, totals,users, name, teamsProps, re
                                     id="panel1bh-header"
                                 >
                                     <Typography sx={{ width: '33%', flexShrink: 0, fontWeight: 'bold' }}>
-                                        Εργαστήριο
+                                        Μάθημα
                                     </Typography>
                                 </AccordionSummary>
                                 <AccordionDetails>
@@ -229,7 +229,7 @@ export default function Class({ exerciseInfo, totals,users, name, teamsProps, re
                                                 <ListItemIcon>
                                                     <InsightsIcon />
                                                 </ListItemIcon>
-                                                <ListItemText primary={'Dashboard'} />
+                                                <ListItemText primary={'Προβολή Μαθήματος'} />
                                             </ListItemButton>
                                         </ListItem>
                                         <ListItem disablePadding>

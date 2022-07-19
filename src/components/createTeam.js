@@ -26,7 +26,6 @@ export default function CreateTeam({ }) {
     const supervisor = context.supervisor;
     const organization = context.organization;
     const teams = context.teams;
-    console.log(teams)
     const setTeams = context.setTeams;
     const users = context.users;
     const [activeUser, setActiveUser] = useState(supervisor.githubname);
@@ -77,7 +76,6 @@ export default function CreateTeam({ }) {
             });
 
             const data = await res.json();
-            console.log(data)
             if (data.success) {
                 setTeams([...teams, { teamName: teamName, supervisor: activeUser }])
                 showNotification(
@@ -112,20 +110,11 @@ export default function CreateTeam({ }) {
 
 
             <Card style={{ minWidth: '70vw', marginLeft: '2%' }}>
+            <div style={{ widht: '100%', display: 'flex', justifyContent: 'center' }}> <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Αρχικοποίηση Ομάδας</p></div>
 
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: '70vw' }} aria-label="caption table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell
-                                    align='right'>
-                                    <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Αρχικοποίηση Ομάδας</p>
-                                </TableCell>
-                                <TableCell>
-                                </TableCell>
-
-                            </TableRow>
-                        </TableHead>
+                        
                         <TableBody>
                             <TableRow>
                                 <TableCell>
@@ -144,7 +133,7 @@ export default function CreateTeam({ }) {
                             <TableRow>
                                 <TableCell>
                                     <Box >
-                                        <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Επιβλέποντας ομάδας</p>
+                                        <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Υπεύθυνος ομάδας</p>
 
                                     </Box>
                                 </TableCell>
@@ -152,13 +141,13 @@ export default function CreateTeam({ }) {
 
                                     <Box >
                                         <FormControl sx={{ m: 1, minWidth: 220 }}>
-                                            <InputLabel id="demo-simple-select-helper-label">Όνομα άσκησης</InputLabel>
+                                            <InputLabel id="demo-simple-select-helper-label">Υπεύθυνος ομάδας</InputLabel>
                                             <Select
                                                 style={{ minWidth: '220px' }}
                                                 labelId="demo-simple-select-label"
                                                 id="demo-simple-select"
                                                 value={activeUser}
-                                                label="Όνομα άσκησης"
+                                                label="Υπεύθυνος ομάδας"
                                                 onChange={handleUserChange}
                                             >
 

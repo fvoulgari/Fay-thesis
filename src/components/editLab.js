@@ -70,7 +70,6 @@ export default function EditLab() {
         //Καλούμε api για να προσθέσουμε έναν coSupervisor
 
     const addCoSupervisors = async (event) => {
-        console.log(email)
         setStateSupervisor(prevState => ([...prevState, email]))
 
         const res = await fetch('/api/addSupervisor', {
@@ -120,7 +119,7 @@ export default function EditLab() {
         if (data.success) {
             showNotification(
                 'success',
-                'Επιτυχής διαγραφή εργαστηρίου',
+                'Επιτυχής διαγραφή μαθήματος',
             );
             router.push('/classhome')
         } else {
@@ -151,14 +150,14 @@ export default function EditLab() {
 
             <Card style={{ minWidth: '70vw', marginLeft: '2%' }}>
 
-                <div style={{ widht: '100%', display: 'flex', justifyContent: 'center' }}> <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Επεξεργασία Εργαστηρίου</p></div>
+                <div style={{ widht: '100%', display: 'flex', justifyContent: 'center' }}> <p style={{ fontWeight: 'bold', fontSize: '17px' }}>Επεξεργασία Μαθήματος</p></div>
 
                 <TableContainer component={Paper}>
                     <Table sx={{ minWidth: '70vw' }} aria-label="caption table">
                         <TableBody>
                             <TableRow sx={{ height: '200px' }}>
                                 <TableCell component="th" scope="row">
-                                    <h4 style={{ fontWeight: 'bold' }}>Προσθήκη υπευθύνου</h4>
+                                    <h4 style={{ fontWeight: 'bold' }}>Προσθήκη υπεύθυνου</h4>
                                 </TableCell>
                                 <TableCell align="left" component="th" scope="row">
                                     <TextField style={{ width: '60%' }} label="Github Email" variant="outlined" type="text" onChange={handleEmail} />
@@ -187,7 +186,7 @@ export default function EditLab() {
                                                         <ListItem
                                                             secondaryAction={
                                                                 <Popconfirm
-                                                                    title={'Είστε σίγουρος ότι θέλετε να διαγράψετε τον υπεύθυνο εργαστηρίου'}
+                                                                    title={'Είστε σίγουρος ότι θέλετε να διαγράψετε τον υπεύθυνο;'}
                                                                     onConfirm={(event) => deleteCoSupervisors(event, user)}
                                                                     okText={'Ναι'}
                                                                     cancelText={'Οχι'}

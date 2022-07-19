@@ -106,7 +106,7 @@ export default function ClassHome({ orgs, cookies, supervisorOrgs }) {
                 <Card style={{ minWidth: '450px', marginLeft: '2%', marginTop: '6%' }}>
                     <TableContainer component={Paper}>
                         <div style={{ widht: '100%', display: 'flex', justifyContent: 'center' , marginTop: '2%'}}>
-                            <h2>Εργαστήρια</h2>
+                            <h2>Μαθήματα</h2>
                         </div>
                         <Table sx={{ minWidth: 650 }} aria-label="caption table">
                             <TableHead>
@@ -157,7 +157,7 @@ export default function ClassHome({ orgs, cookies, supervisorOrgs }) {
                         </Table>
                         <div style={{ margin: '2%' }}>
                             <Button type="submit" variant="contained" color="primary" onClick={createNewClass}>
-                                Δημιουργια  εργαστηριου
+                                Δημιουργια  μαθηματος
                             </Button>
                         </div>
                     </TableContainer>
@@ -184,6 +184,7 @@ export async function getServerSideProps(context) {
         }
     }
     //Βρίσκουμε σε ποιους οργανισμούς έχει ήδη ενταχθεί ο χρήστης
+    
     const supervisorOrgs = await getUserOrganizations(cookies.supervisor.githubname);
     return {
         props: {

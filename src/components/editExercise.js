@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 import _ from 'lodash';
 import {
-     Typography, Card, Table, TableBody, TableCell,  TableContainer, TableHead, TableRow,  ListItemAvatar, ListItem, List, Button, Select, MenuItem, FormControl, InputLabel, Paper, IconButton, Popover
+    Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ListItemAvatar, ListItem, List, Button, Select, MenuItem, FormControl, InputLabel, Paper, IconButton, Popover
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -103,11 +103,16 @@ export default function EditExercise({ repos }) {
                 'formData', //key
                 JSON.stringify({ name: templateRepo, lesson: lesson }) //value
             );
-            for (let i = 0; i < files.files.length; i++) {
-                formData.append("file", files.files[i]);
+            if (files.files) {
+                for (let i = 0; i < files.files.length; i++) {
+                    formData.append("file", files.files[i]);
+                }
             }
-            for (let j = 0; j < testfiles.testfiles.length; j++) {
-                formData.append("testFile", testfiles.testfiles[j]);
+            if (testfiles.testfiles) {
+
+                for (let j = 0; j < testfiles.testfiles.length; j++) {
+                    formData.append("testFile", testfiles.testfiles[j]);
+                }
             }
 
 
@@ -123,16 +128,16 @@ export default function EditExercise({ repos }) {
                     'success',
                     'Επιτυχής πρόσθεση αρχείων ',
                 );
-    
+
             } else {
                 showNotification(
                     'error',
                     'Ανεπιτυχής πρόσθεση αρχείων',
                     'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
                 );
-    
 
-            
+
+
             }
         }
     }
@@ -161,15 +166,15 @@ export default function EditExercise({ repos }) {
                 );
                 setGithubFiles([])
                 setTemplateRepo(null)
-                
-    
+
+
             } else {
                 showNotification(
                     'error',
                     'Ανεπιτυχής διαγραφή αρχείων',
                     'Συνέβη κάποιο σφάλμα, επικοινωνήστε με τον διαχειριστή.',
                 );
-    
+
 
             }
         }
@@ -206,7 +211,7 @@ export default function EditExercise({ repos }) {
 
 
     }
-   
+
     const handleInfoChange = async () => {
         //Όταν αλλάζει το templateRepo τότε φέρνουμε όλα τα αρχεία από το github
         const res = await fetch('/api/getRepoInformation', {
@@ -285,12 +290,12 @@ export default function EditExercise({ repos }) {
                                                 })}
 
                                             </Select>
-                                        </FormControl>                                                
+                                        </FormControl>
                                     </Box>
                                 </TableCell>
                             </TableRow>
-                            
-                         
+
+
                             <TableRow>
                                 <TableCell>
                                     <Box style={{ display: 'flex', verticalAlign: 'middle' }} >
@@ -331,7 +336,7 @@ export default function EditExercise({ repos }) {
                                                 και η εκφώνηση σε μορφή .md
                                             </Typography>
                                         </Popover>
-                                        <span style={{ fontWeight: 'bold', fontSize: '17px' }}>προσθηκη αρχείων</span>
+                                        <span style={{ fontWeight: 'bold', fontSize: '17px' }}>Προσθήκη αρχείων</span>
                                     </Box>
 
                                 </TableCell>
@@ -410,7 +415,7 @@ export default function EditExercise({ repos }) {
                                 </TableCell>
                                 <TableCell align='right' >
                                     <Button style={{ minWidth: 220 }} type="submit" variant="contained" color="success" onClick={updateStudentsRepository}>
-                                        Προσθεση αρχειων
+                                        Προσθηκη αρχειων
                                     </Button>
                                 </TableCell>
 
